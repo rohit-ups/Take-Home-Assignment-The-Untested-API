@@ -130,3 +130,25 @@ describe("GET /tasks", () => {
     expect(res.body.length).toBe(10);
   });
 });
+
+describe("PUT /tasks/:id", () => {
+  beforeEach(() => {
+    taskService._reset();
+  });
+
+  test("should update task", async () => {
+    const newTaskRes = await request(app).post("/tasks").send({
+      title: "Old",
+    });
+
+    const updatedTaskRes = await request(app)
+      .put(`/tasks/${newTaskRes.body.id}`)
+      .send({ title: "New" });
+
+    expect(updatedTaskRes.statusCode).toBe(200);
+
+    expect(updatedTaskRes.body.title).toBe("New");
+
+    expect(updatedTaskRes.body.id).toBe(newTaskRes.body.id);
+  });
+});
