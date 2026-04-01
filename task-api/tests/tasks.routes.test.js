@@ -171,4 +171,26 @@ describe("PUT /tasks/:id", () => {
 
     expect(updatedTaskRes.statusCode).toBe(400);
   });
+
+  test("should delete the task", async () => {
+    const newTaskRes = await request(app).post("/tasks").send({
+      title: "Task 1",
+    });
+
+    const deleteTaskRes = await request(app).delete(
+      `/tasks/${newTaskRes.body.id}`,
+    );
+
+    const allTasksRes = await request(app).get("/tasks");
+
+    expect(deleteTaskRes.statusCode).toBe(204);
+
+    expect(allTasksRes.body.length).toBe(0);
+
+    expect(
+      allTasksRes.body.find((t) => t.id === newTaskRes.body.id),
+    ).toBeUndefined();
+  });
+
+  
 });
