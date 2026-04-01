@@ -1,92 +1,73 @@
 const taskService = require("../src/services/taskService");
 
-describe("Task Service", ()=> {
-    beforeEach(()=>{
-        taskService._reset();
-    })
+describe("Task Service", () => {
+  beforeEach(() => {
+    taskService._reset();
+  });
 
-    test("should create task", ()=> {
-        const task = taskService.create({
-            title: "Test Task"
-        })
+  test("should create task", () => {
+    const task = taskService.create({
+      title: "Test Task",
+    });
 
-        expect(task.title)
-        .toBe("Test Task")
+    expect(task.title).toBe("Test Task");
 
-        expect(task.status)
-        .toBe("todo")
+    expect(task.status).toBe("todo");
 
-        expect(task.id)
-        .toBeDefined()
-    })
+    expect(task.id).toBeDefined();
+  });
 
-    test("should return all tasks", ()=> {
-         taskService.create({
-            title: "Task 1"
-         })
+  test("should return all tasks", () => {
+    taskService.create({
+      title: "Task 1",
+    });
 
-         taskService.create({
-            title: "Task 2"
-         })
-    
-        const tasks = taskService.getAll()
+    taskService.create({
+      title: "Task 2",
+    });
 
-        expect(tasks.length)
-        .toBe(2)
-    })
+    const tasks = taskService.getAll();
 
-    test("should update task", ()=> {
-        const task = taskService.create({
-            title: "Old"
-        })
+    expect(tasks.length).toBe(2);
+  });
 
-        const updated = taskService.update(
-            task.id, 
-            {title: "New"}
-        )
+  test("should update task", () => {
+    const task = taskService.create({
+      title: "Old",
+    });
 
-        expect(updated.title)
-        .toBe("New")
-    })
+    const updated = taskService.update(task.id, { title: "New" });
 
-    test("should mark task complete", ()=> {
-        const task = taskService.create({
-            title:"Finish"
-        })
+    expect(updated.title).toBe("New");
+  });
 
-        const completed = 
-        taskService.completeTask(task.id);
+  test("should mark task complete", () => {
+    const task = taskService.create({
+      title: "Finish",
+    });
 
-        expect(completed.status)
-        .toBe("done")
+    const completed = taskService.completeTask(task.id);
 
-        expect(completed.completedAt)
-        .toBeDefined()
-    })
+    expect(completed.status).toBe("done");
 
-    test("should delete task",()=> {
-        const task = taskService.create({
-            title: "Delete"
-        })
+    expect(completed.completedAt).toBeDefined();
+  });
 
-        const deleted = taskService.remove(task.id)
+  test("should delete task", () => {
+    const task = taskService.create({
+      title: "Delete",
+    });
 
-        expect(deleted)
-        .toBe(true)
+    const deleted = taskService.remove(task.id);
 
-        expect(
-            taskService.getAll().length
-        ).toBe(0)
-    })
+    expect(deleted).toBe(true);
 
-    test("should return null if task not found", ()=> {
-        const result = taskService.update(
-            "fake-id",
-            {title: "X"}
-        )
+    expect(taskService.getAll().length).toBe(0);
+  });
 
-        expect(result)
-        .toBeNull()
-    })
+  test("should return null if task not found", () => {
+    const result = taskService.update("fake-id", { title: "X" });
 
-})
+    expect(result).toBeNull();
+  });
+});
