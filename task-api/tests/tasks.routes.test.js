@@ -61,7 +61,7 @@ describe("GET /tasks", () => {
     expect(res.body.length).toBe(0);
   });
 
-  test("should return filter tasks by status", async () => {
+  test("should filter tasks by status", async () => {
     await request(app).post("/tasks").send({
       title: "Task 1",
     });
@@ -107,4 +107,3 @@ describe("GET /tasks", () => {
     expect(res.body.length).toBe(5);
   });
 });
-``;
