@@ -3,7 +3,7 @@ const app = require("../src/app");
 const taskService = require("../src/services/taskService")
 
 describe("POST /tasks", ()=> {
-    
+
     beforeEach(()=>{
             taskService._reset();
         })
@@ -15,6 +15,9 @@ describe("POST /tasks", ()=> {
             .send({
                 title: "API task"
             })
+
+            expect(res.statusCode)
+            .toBe(201)
 
             expect(res.body.title)
             .toBe("API task")
@@ -49,7 +52,20 @@ describe("POST /tasks", ()=> {
         await request(app)
             .get("/tasks")
 
+        expect(res.statusCode)
+        .toBe(200)
+
         expect(res.body.length)
         .toBe(2)
     })
+
+    test("should return empty array when no task exist", async()=> {
+        const res =
+        await request(app)
+            .get("/tasks")
+
+        expect(res.body.length)
+        .toBe(0)
+    })
+
 })
