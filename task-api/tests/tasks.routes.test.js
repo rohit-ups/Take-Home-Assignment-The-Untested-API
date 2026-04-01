@@ -24,4 +24,26 @@ describe("POST /tasks", ()=> {
         expect(res.statusCode)
         .toBe(400);
     })
+
+    test("should return tasks when no query is provided", async()=> {
+
+        await request(app)
+            .post("/tasks")
+            .send({
+                title:"Task 2" 
+            })
+
+        await request(app)
+            .post("/tasks")
+            .send({
+                title:"Task 2"
+            }) 
+
+        const res = 
+        await request(app)
+            .get("/tasks")
+
+        expect(res.body.length)
+        .toBe(2)
+    })
 })
