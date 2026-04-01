@@ -49,4 +49,19 @@ describe("Task Service", ()=> {
         .toBe("New")
     })
 
+    test("should mark task complete", ()=> {
+        const task = taskService.create({
+            title:"Finish"
+        })
+
+        const completed = 
+        taskService.completeTask(task.id);
+
+        expect(completed.status)
+        .toBe("done")
+
+        expect(completed.completedAt)
+        .toBeDefined()
+    })
+
 })
