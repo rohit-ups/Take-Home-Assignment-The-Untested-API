@@ -1,7 +1,13 @@
 const request = require("supertest");
 const app = require("../src/app");
+const taskService = require("../src/services/taskService")
 
 describe("POST /tasks", ()=> {
+    
+    beforeEach(()=>{
+            taskService._reset();
+        })
+
     test("should create task", async()=> {
         const res =
         await request(app)
