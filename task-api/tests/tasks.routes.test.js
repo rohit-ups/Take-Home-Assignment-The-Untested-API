@@ -74,4 +74,21 @@ describe("GET /tasks", () => {
 
     expect(res.body[0].status).toBe("todo");
   });
+
+  test("should return paginated tasks", async () => {
+    const taskData = { title: "Task" };
+
+    const requests = Array.from({ length: 20 }, () =>
+      request(app).post("/tasks").send(taskData),
+    );
+
+    await Promise.all(requests);
+
+    const res = await request(app).get("/tasks?page=1&limit=10");
+
+    expect(res.statusCode).toBe(200);
+
+    expect(res.body.length).toBe(10);
+  });
+
 });
