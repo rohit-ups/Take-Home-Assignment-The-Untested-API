@@ -68,4 +68,25 @@ describe("POST /tasks", ()=> {
         .toBe(0)
     })
 
+    test("should return filter tasks by status", async()=> {
+
+        await request(app)
+            .post("/tasks")
+            .send({
+                title:"Task 1"
+            })
+
+        await request(app)
+            .post("/tasks")
+            .send({
+                title:"Task 2"
+            }) 
+
+        const res = 
+        await request(app)
+            .get("/tasks?status=todo")
+        
+        expect(res.body[0].status)
+        .toBe("todo")
+    })
 })
