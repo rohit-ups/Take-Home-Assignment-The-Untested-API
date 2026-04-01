@@ -192,5 +192,9 @@ describe("PUT /tasks/:id", () => {
     ).toBeUndefined();
   });
 
-  
+  test("should return 404 when deleting missing task", async () => {
+    const res = await request(app).delete("/tasks/fake-id");
+
+    expect(res.statusCode).toBe(404);
+  });
 });
