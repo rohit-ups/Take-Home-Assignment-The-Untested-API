@@ -151,4 +151,12 @@ describe("PUT /tasks/:id", () => {
 
     expect(updatedTaskRes.body.id).toBe(newTaskRes.body.id);
   });
+
+  test("should return 404 when updating missing task", async () => {
+    const res = await request(app).put("/tasks/fake-id").send({
+      title: "New",
+    });
+
+    expect(res.statusCode).toBe(404);
+  });
 });
