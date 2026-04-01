@@ -22,6 +22,15 @@ describe("POST /tasks", () => {
 
     expect(res.statusCode).toBe(400);
   });
+
+  test("should fail task with invalid priority", async () => {
+    const res = await request(app).post("/tasks").send({
+      title: "Task",
+      priority: "Invalid",
+    });
+
+    expect(res.statusCode).toBe(400)
+  });
 });
 
 describe("GET /tasks", () => {
@@ -72,7 +81,7 @@ describe("GET /tasks", () => {
 
     const res = await request(app).get("/tasks?status=todo");
 
-    expect(res.body.every(t=> t.status === "todo")).toBe(true);
+    expect(res.body.every((t) => t.status === "todo")).toBe(true);
   });
 
   test("should return paginated tasks", async () => {
