@@ -20,4 +20,19 @@ describe("Task Service", ()=> {
         .toBeDefined()
     })
 
+    test("should return all tasks", ()=> {
+         taskService.create({
+            title: "Task 1"
+         })
+
+         taskService.create({
+            title: "Task 2"
+         })
+    
+        const tasks = taskService.getAll()
+
+        expect(tasks.length)
+        .toBe(2)
+    })
+
 })
