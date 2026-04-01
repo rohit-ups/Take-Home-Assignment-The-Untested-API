@@ -159,4 +159,16 @@ describe("PUT /tasks/:id", () => {
 
     expect(res.statusCode).toBe(404);
   });
+
+  test("should fail with invalid title", async () => {
+    const newTaskRes = await request(app).post("/tasks").send({
+      title: "Old",
+    });
+
+    const updatedTaskRes = await request(app)
+      .put(`/tasks/${newTaskRes.body.id}`)
+      .send({ title: "" });
+
+    expect(updatedTaskRes.statusCode).toBe(400);
+  });
 });
