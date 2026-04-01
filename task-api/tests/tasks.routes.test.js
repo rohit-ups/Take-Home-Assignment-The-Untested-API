@@ -14,4 +14,14 @@ describe("POST /tasks", ()=> {
             .toBe("API task")
         
     })
+
+    test("should fail without title", async()=> {
+        const res = 
+        await request(app)
+            .post("/tasks")
+            .send({})
+
+        expect(res.statusCode)
+        .toBe(400);
+    })
 })
