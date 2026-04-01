@@ -64,4 +64,19 @@ describe("Task Service", ()=> {
         .toBeDefined()
     })
 
+    test("should delete task",()=> {
+        const task = taskService.create({
+            title: "Delete"
+        })
+
+        const deleted = taskService.remove(task.id)
+
+        expect(deleted)
+        .toBe(true)
+
+        expect(
+            taskService.getAll().length
+        ).toBe(0)
+    })
+
 })
