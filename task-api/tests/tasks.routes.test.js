@@ -94,17 +94,17 @@ describe("GET /tasks", () => {
   test("should return second page", async () => {
     const taskData = { title: "Task" };
 
-    const requests = Array.from({ length: 15 }, () => {
-      request(app).post("/tasks").send(taskData);
-    });
+    const requests = Array.from({ length: 15 }, () =>
+      request(app).post("/tasks").send(taskData),
+    );
 
     await Promise.all(requests);
 
     const res = await request(app).get("/tasks?page=2&limit=10");
 
-    expect(res.statusCode).toBe(200)
+    expect(res.statusCode).toBe(200);
 
     expect(res.body.length).toBe(5);
   });
-
 });
+``;
