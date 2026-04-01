@@ -72,7 +72,7 @@ describe("GET /tasks", () => {
 
     const res = await request(app).get("/tasks?status=todo");
 
-    expect(res.body[0].status).toBe("todo");
+    expect(res.body.every(t=> t.status === "todo")).toBe(true);
   });
 
   test("should return paginated tasks", async () => {
