@@ -35,4 +35,18 @@ describe("Task Service", ()=> {
         .toBe(2)
     })
 
+    test("should update task", ()=> {
+        const task = taskService.create({
+            title: "Old"
+        })
+
+        const updated = taskService.update(
+            task.id, 
+            {title: "New"}
+        )
+
+        expect(updated.title)
+        .toBe("New")
+    })
+
 })
