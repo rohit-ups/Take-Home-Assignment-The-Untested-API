@@ -79,4 +79,14 @@ describe("Task Service", ()=> {
         ).toBe(0)
     })
 
+    test("should return null if task not found", ()=> {
+        const result = taskService.update(
+            "fake-id",
+            {title: "X"}
+        )
+
+        expect(result)
+        .toBeNull()
+    })
+
 })
