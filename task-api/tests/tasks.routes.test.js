@@ -29,7 +29,7 @@ describe("POST /tasks", () => {
       priority: "Invalid",
     });
 
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(400);
   });
 });
 
@@ -114,5 +114,19 @@ describe("GET /tasks", () => {
     expect(res.statusCode).toBe(200);
 
     expect(res.body.length).toBe(5);
+  });
+
+  test("should use defaults for invalid pagination", async () => {
+    const taskData = { title: "Task" };
+
+    const requests = Array.from({ length: 12 }, () =>
+      request(app).post("/posts").send(taskData),
+    );
+
+    await Promise.all(requests);
+
+    const res = await request(app).get("/posts?page=abc&limit=xyz");
+
+    expect(res.body.length).toBe(10);
   });
 });
