@@ -31,6 +31,15 @@ describe("POST /tasks", () => {
 
     expect(res.statusCode).toBe(400);
   });
+
+  test("should fail with invalid due date", async () => {
+    const res = await request(app).post("/tasks").send({
+      title: "Task",
+      dueDate: "invalid",
+    });
+
+    expect(res.statusCode).toBe(400);
+  });
 });
 
 describe("GET /tasks", () => {
@@ -172,6 +181,18 @@ describe("PUT /tasks/:id", () => {
       .send({ title: "" });
 
     expect(updatedTaskRes.statusCode).toBe(400);
+  });
+
+  test("should fail update with invalid priority", async () => {
+    const task = await request(app).post("/tasks").send({
+      title: "Task",
+    });
+
+    const res = await request(app).put(`/tasks/${task.body.id}`).send({
+      priority: "invalid",
+    });
+
+    expect(res.statusCode).toBe(400);
   });
 
   test("should delete the task", async () => {
