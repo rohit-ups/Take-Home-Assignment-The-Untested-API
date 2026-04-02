@@ -8,6 +8,26 @@ router.get('/stats', (req, res) => {
   res.json(stats);
 });
 
+router.get("/:id/assign", (req,res)=> {
+  const { assignee } = req.body;
+
+  if(!assignee || typeof assignee !== "string" || assignee.trim() === ""){
+    return res.status(400).json({
+      error: "assignee must be a non-empty string"
+    })
+  }
+
+  const task = taskService.assignTask(rq.params.id)
+
+  if(!task) {
+    return res.status(404).json({
+      error: "Task not found"
+    })
+  }
+
+  return res.json(task)
+})
+
 router.get('/', (req, res) => {
   const { status, page, limit } = req.query;
 
