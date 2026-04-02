@@ -70,6 +70,16 @@ describe("Task Service", () => {
 
       expect(filterTasks[0].id).toBe(todoTask.id);
     });
+
+    test("should not match partial status", () => {
+      taskService.create({
+        title: "Task Done",
+      });
+
+      const filterTasks = taskService.getByStatus("do");
+
+      expect(filterTasks.length).toBe(0);
+    });
   });
 
   describe("Update", () => {
