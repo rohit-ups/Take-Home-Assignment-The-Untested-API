@@ -51,6 +51,25 @@ describe("Task Service", () => {
 
       expect(task).toBeUndefined();
     });
+
+    test("should filter task by status", () => {
+      taskService.create({
+        title: "Task Done",
+        status: "done",
+      });
+
+      const todoTask = taskService.create({
+        title: "Task Todo",
+      });
+
+      const filterTasks = taskService.getByStatus("todo");
+
+      expect(filterTasks.length).toBe(1);
+
+      expect(filterTasks.every((t) => t.status === "todo")).toBe(true);
+
+      expect(filterTasks[0].id).toBe(todoTask.id);
+    });
   });
 
   describe("Update", () => {
