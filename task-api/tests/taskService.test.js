@@ -80,6 +80,19 @@ describe("Task Service", () => {
 
       expect(filterTasks.length).toBe(0);
     });
+
+    test("should paginate tasks", () => {
+      for (let i = 0; i < 15; i++) {
+        taskService.create({ title: "Task" + " " + (i + 1) });
+      }
+
+      const tasks = taskService.getPaginated(1, 10);
+
+      expect(tasks.length).toBe(10);
+      
+      expect(tasks[0].title).toBe("Task 1");
+
+    });
   });
 
   describe("Update", () => {
