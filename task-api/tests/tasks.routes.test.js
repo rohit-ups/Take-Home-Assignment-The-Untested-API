@@ -234,3 +234,49 @@ describe("PATCH /tasks/:id/complete", () => {
     expect(res.body.error).toBe("Task not found");
   });
 });
+
+describe("GET /tasks/stats", () => {
+  beforeEach(() => {
+    taskService._reset();
+  });
+
+  test("should return stats", async () => {
+    const todoTaskRes = request(app).post("/tasks").send({
+      title: "Task Todo",
+    });
+
+    const inProgressTaskRes = request(app).post("/tasks").send({
+      title: "Task InProgress",
+      status: "in_progress",
+    });
+    const doneTaskRes = request(app).post("/tasks").send({
+      title: "Task Done",
+      status: "done",
+    });
+
+    const overdueTaskRes = request(app)
+      .post("/tasks")
+      .send({
+        title: "Task OverDue",
+        dueDate: new Date(Date.now() - 1000).toISOString(),
+      });
+
+    await Promise.all([
+      todoTaskRes,
+      inProgressTaskRes,
+      doneTaskRes,
+      overdueTaskRes,
+    ]);
+
+    const statsRes = await request(app).get("/tasks/stats");
+
+    expect(statsRes.statusCode).toBe(200);
+
+    expect(statsRes.body).toEqual({
+      todo: 2,
+      in_progress: 1,
+      done: 1,
+      overdue: 1,
+    });
+  });
+});
