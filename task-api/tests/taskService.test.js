@@ -142,13 +142,26 @@ describe("Task Service", () => {
     test("should mark task complete", () => {
       const task = taskService.create({
         title: "Finish",
+        priority: "hight",
       });
 
       const completed = taskService.completeTask(task.id);
 
+      expect(completed.id).toBe(task.id);
+
+      expect(completed.title).toBe(task.title);
+
+      expect(completed.priority).toBe(task.priority);
+
       expect(completed.status).toBe("done");
 
-      expect(completed.completedAt).toBeDefined();
+      expect(completed.completedAt).toBeTruthy();
+    });
+
+    test("should return null when marking complete missing task", () => {
+      const result = taskService.completeTask("fake-id");
+
+      expect(result).toBeNull();
     });
   });
 
