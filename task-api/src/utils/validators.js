@@ -1,4 +1,4 @@
-const VALID_STATUSES = ['todo', 'in_progress', 'done'];
+const VALID_STATUSES = ['pending', 'in-progress', 'completed'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
 const validateCreateTask = (body) => {
