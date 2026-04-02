@@ -207,4 +207,26 @@ describe("Task Service", () => {
       });
     });
   });
+
+  describe("Assign", () => {
+    test("should assign task", () => {
+      const task = taskService.create({
+        title: "Task",
+      });
+
+      const assignedTask = taskService.assignTask(task.id, "Ravinder");
+
+      expect(assignedTask).toBeDefined();
+
+      expect(assignedTask.assignee).toBe("Ravinder");
+
+      expect(assignedTask.id).toBe(task.id);
+    });
+
+    test("should return null if task not found", () => {
+      const result = taskService.assignTask("fake-id", "Ravinder");
+
+      expect(result).toBeNull();
+    });
+  });
 });
