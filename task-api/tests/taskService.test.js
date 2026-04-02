@@ -45,6 +45,12 @@ describe("Task Service", () => {
 
       expect(task.id).toBe(newTask.id);
     });
+
+    test("should return undefined if task not found", () => {
+      const task = taskService.findById("fake-id");
+
+      expect(task).toBeUndefined();
+    });
   });
 
   describe("Update", () => {
