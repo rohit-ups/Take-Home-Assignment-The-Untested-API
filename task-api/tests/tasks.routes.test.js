@@ -198,3 +198,27 @@ describe("PUT /tasks/:id", () => {
     expect(res.statusCode).toBe(404);
   });
 });
+
+describe("PATCH /tasks/:id/complete", () => {
+  beforeEach(() => {
+    taskService._reset();
+  });
+
+  test("should complete task", async () => {
+    const taskRes = await request(app).post("/tasks").send({
+      title: "Task",
+    });
+
+    const completedTaskRes = await request(app).patch(
+      `/tasks/${taskRes.body.id}/complete`,
+    );
+
+    expect(completedTaskRes.statusCode).toBe(200);
+
+    expect(completedTaskRes.body.status).toBe("done");
+
+    expect(completedTaskRes.body.id).toBe(taskRes.body.id);
+
+    expect(completedTaskRes.body.completedAt).toBeTruthy();
+  });
+});
