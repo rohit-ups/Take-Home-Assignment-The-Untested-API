@@ -89,9 +89,20 @@ describe("Task Service", () => {
       const tasks = taskService.getPaginated(1, 10);
 
       expect(tasks.length).toBe(10);
-      
-      expect(tasks[0].title).toBe("Task 1");
 
+      expect(tasks[0].title).toBe("Task 1");
+    });
+
+    test("should return second page", () => {
+      for (let i = 0; i < 15; i++) {
+        taskService.create({ title: "Task" + " " + (i + 1) });
+      }
+
+      const tasks = taskService.getPaginated(2, 10);
+
+      expect(tasks.length).toBe(5)
+
+      expect(tasks[0].title).toBe("Task 11")
     });
   });
 
