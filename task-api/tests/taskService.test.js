@@ -183,5 +183,15 @@ describe("Task Service", () => {
       });
     });
 
+    test("should return zero stats when no tasks", () => {
+      const stats = taskService.getStats();
+
+      expect(stats).toEqual({
+        todo: 0,
+        in_progress: 0,
+        done: 0,
+        overdue: 0,
+      });
+    });
   });
 });
