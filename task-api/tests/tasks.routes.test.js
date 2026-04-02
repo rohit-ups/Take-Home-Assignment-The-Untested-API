@@ -158,6 +158,8 @@ describe("PUT /tasks/:id", () => {
     });
 
     expect(res.statusCode).toBe(404);
+
+    expect(res.body.error).toBe("Task not found");
   });
 
   test("should fail with invalid title", async () => {
@@ -196,6 +198,8 @@ describe("PUT /tasks/:id", () => {
     const res = await request(app).delete("/tasks/fake-id");
 
     expect(res.statusCode).toBe(404);
+
+    expect(res.body.error).toBe("Task not found");
   });
 });
 
@@ -222,11 +226,11 @@ describe("PATCH /tasks/:id/complete", () => {
     expect(completedTaskRes.body.completedAt).toBeTruthy();
   });
 
-  test("should return 404 when marking complete missing task", async()=> {
-    const res = await request(app).patch("/tasks/fake-id/complete")
+  test("should return 404 when marking complete missing task", async () => {
+    const res = await request(app).patch("/tasks/fake-id/complete");
 
-    expect(res.statusCode).toBe(404)
+    expect(res.statusCode).toBe(404);
 
-    expect(res.body.error).toBe("Task not found")
-  })
+    expect(res.body.error).toBe("Task not found");
+  });
 });
