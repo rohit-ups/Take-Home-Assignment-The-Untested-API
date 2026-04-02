@@ -129,12 +129,12 @@ describe("GET /tasks", () => {
     const taskData = { title: "Task" };
 
     const requests = Array.from({ length: 12 }, () =>
-      request(app).post("/posts").send(taskData),
+      request(app).post("/tasks").send(taskData),
     );
 
     await Promise.all(requests);
 
-    const res = await request(app).get("/posts?page=abc&limit=xyz");
+    const res = await request(app).get("/tasks?page=abc&limit=xyz");
 
     expect(res.body.length).toBe(10);
   });

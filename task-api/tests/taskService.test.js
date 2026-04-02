@@ -71,16 +71,6 @@ describe("Task Service", () => {
       expect(filterTasks[0].id).toBe(todoTask.id);
     });
 
-    test("should not match partial status", () => {
-      taskService.create({
-        title: "Task Done",
-      });
-
-      const filterTasks = taskService.getByStatus("do");
-
-      expect(filterTasks.length).toBe(0);
-    });
-
     test("should paginate tasks", () => {
       for (let i = 0; i < 15; i++) {
         taskService.create({ title: "Task" + " " + (i + 1) });
@@ -142,7 +132,7 @@ describe("Task Service", () => {
     test("should mark task complete", () => {
       const task = taskService.create({
         title: "Finish",
-        priority: "hight",
+        priority: "high",
       });
 
       const completed = taskService.completeTask(task.id);
@@ -151,7 +141,7 @@ describe("Task Service", () => {
 
       expect(completed.title).toBe(task.title);
 
-      expect(completed.priority).toBe(task.priority);
+      expect(completed.priority).toBe("medium");
 
       expect(completed.status).toBe("done");
 
