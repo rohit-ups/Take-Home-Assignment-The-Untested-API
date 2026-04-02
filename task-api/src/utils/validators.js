@@ -30,7 +30,14 @@ const validateUpdateTask = (body) => {
   if (body.dueDate && isNaN(Date.parse(body.dueDate))) {
     return 'dueDate must be a valid ISO date string';
   }
+  
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+const validateAssignTask = (body) => {
+  if (!body.assignee || typeof body.assignee !== 'string') {
+    return 'assignee is required and must be a string';
+  }
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };
