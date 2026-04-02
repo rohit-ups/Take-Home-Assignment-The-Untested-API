@@ -69,4 +69,17 @@ router.patch('/:id/complete', (req, res) => {
   res.json(task);
 });
 
+router.patch('/:id/assign', (req, res) => {
+  if (req.body.assignee === undefined || typeof req.body.assignee !== 'string' || req.body.assignee.trim() === '') {
+    return res.status(400).json({ error: 'assignee is required and must be a non-empty string' });
+  }
+
+  const task = taskService.assignTask(req.params.id, req.body.assignee);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
+});
+
 module.exports = router;
