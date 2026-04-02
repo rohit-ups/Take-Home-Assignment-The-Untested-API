@@ -33,6 +33,18 @@ describe("Task Service", () => {
 
       expect(tasks.length).toBe(2);
     });
+
+    test("should return task by ID", () => {
+      const newTask = taskService.create({ title: "Task" });
+
+      const task = taskService.findById(newTask.id);
+
+      expect(task).toBeDefined();
+
+      expect(task.title).toBe(newTask.title);
+
+      expect(task.id).toBe(newTask.id);
+    });
   });
 
   describe("Update", () => {
