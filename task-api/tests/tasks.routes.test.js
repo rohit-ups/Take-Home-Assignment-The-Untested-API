@@ -244,7 +244,7 @@ describe("PATCH /tasks/:id/complete", () => {
 
     expect(completedTaskRes.body.id).toBe(taskRes.body.id);
 
-    expect(completedTaskRes.body.priority).toBe(taskRes.priority);
+    expect(completedTaskRes.body.priority).toBe(taskRes.body.priority);
 
     expect(completedTaskRes.body.completedAt).toBeTruthy();
   });
