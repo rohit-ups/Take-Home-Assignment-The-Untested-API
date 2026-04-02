@@ -221,4 +221,12 @@ describe("PATCH /tasks/:id/complete", () => {
 
     expect(completedTaskRes.body.completedAt).toBeTruthy();
   });
+
+  test("should return 404 when marking complete missing task", async()=> {
+    const res = await request(app).patch("/tasks/fake-id/complete")
+
+    expect(res.statusCode).toBe(404)
+
+    expect(res.body.error).toBe("Task not found")
+  })
 });
