@@ -279,4 +279,16 @@ describe("GET /tasks/stats", () => {
       overdue: 1,
     });
   });
+
+  test("should return zero stats when no tasks", async () => {
+    const statsRes = await request(app).get("/tasks/stats");
+
+    expect(statsRes.statusCode).toBe(200);
+    expect(statsRes.body).toEqual({
+      todo: 0,
+      in_progress: 0,
+      done: 0,
+      overdue: 0,
+    });
+  });
 });
