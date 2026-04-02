@@ -100,9 +100,9 @@ describe("Task Service", () => {
 
       const tasks = taskService.getPaginated(2, 10);
 
-      expect(tasks.length).toBe(5)
+      expect(tasks.length).toBe(5);
 
-      expect(tasks[0].title).toBe("Task 11")
+      expect(tasks[0].title).toBe("Task 11");
     });
   });
 
@@ -152,5 +152,36 @@ describe("Task Service", () => {
     });
   });
 
-  describe("Stats", () => {});
+  describe("Stats", () => {
+    test("should return stats", () => {
+      taskService.create({
+        title: "Task Todo",
+      });
+
+      taskService.create({
+        title: "Task InProgress",
+        status: "in_progress",
+      });
+
+      taskService.create({
+        title: "Task Done",
+        status: "done",
+      });
+
+      taskService.create({
+        title: "Over Due Task",
+        dueDate: new Date(Date.now() - 1000).toISOString(),
+      });
+
+      const stats = taskService.getStats();
+
+      expect(stats).toEqual({
+        todo: 2,
+        in_progress: 1,
+        done: 1,
+        overdue: 1,
+      });
+    });
+
+  });
 });
