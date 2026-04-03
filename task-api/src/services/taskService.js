@@ -6,10 +6,12 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// Use an exact match here so filters stay predictable and don't match partial values.
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  // The API uses page=1 as the first page, so the offset has to be 1-based.
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -28,7 +30,14 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({
+  title,
+  description = '',
+  status = 'todo',
+  priority = 'medium',
+  dueDate = null,
+  assignee = null,
+}) => {
   const task = {
     id: uuidv4(),
     title,
@@ -36,6 +45,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -76,6 +86,20 @@ const completeTask = (id) => {
   return updated;
 };
 
+const assignTask = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  // Assignment is a simple field update for now; route validation protects the input shape.
+  const updated = {
+    ...tasks[index],
+    assignee,
+  };
+
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +114,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };

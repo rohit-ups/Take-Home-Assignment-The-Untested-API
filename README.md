@@ -1,22 +1,3 @@
-# Take-Home Assignment — The Untested API
-
-A 2-day take-home assignment. You'll read unfamiliar code, write tests, track down bugs, and ship a small feature.
-
-Read **[ASSIGNMENT.md](./ASSIGNMENT.md)** for the full brief before you start.
-
----
-
-## A note on AI tools
-
-You're welcome to use AI tools. What we're evaluating is your ability to read and reason about unfamiliar code — so your submission should reflect your own understanding, not just generated output.
-
-Concretely:
-- For each bug you report: include where in the code it lives and why it happens
-- For the feature you implement: briefly explain the design decisions you made
-- If something surprised you or you had to make a tradeoff, say so
-
----
-
 ## Getting Started
 
 **Prerequisites:** Node.js 18+
@@ -30,25 +11,26 @@ npm start        # runs on http://localhost:3000
 **Tests:**
 
 ```bash
-npm test           # run test suite
-npm run coverage   # run with coverage report
+npm test
+npm run coverage
 ```
 
 ---
 
 ## Project Structure
 
-```
+```text
 task-api/
   src/
     app.js                  # Express app setup
     routes/tasks.js         # Route handlers
     services/taskService.js # Business logic + in-memory data store
     utils/validators.js     # Input validation helpers
-  tests/                    # Your tests go here
+  tests/                    # Test suite
   package.json
   jest.config.js
-ASSIGNMENT.md               # Full brief — read this first
+ASSIGNMENT.md               # Full brief
+BUG_REPORT.md               # Bugs found during testing
 ```
 
 > The data store is in-memory. It resets every time the server restarts.
@@ -57,15 +39,15 @@ ASSIGNMENT.md               # Full brief — read this first
 
 ## API Reference
 
-| Method   | Path                      | Description                              |
-|----------|---------------------------|------------------------------------------|
-| `GET`    | `/tasks`                  | List all tasks. Supports `?status=`, `?page=`, `?limit=` |
-| `POST`   | `/tasks`                  | Create a new task                        |
-| `PUT`    | `/tasks/:id`              | Full update of a task                    |
-| `DELETE` | `/tasks/:id`              | Delete a task (returns 204)              |
-| `PATCH`  | `/tasks/:id/complete`     | Mark a task as complete                  |
-| `GET`    | `/tasks/stats`            | Counts by status + overdue count         |
-| `PATCH`  | `/tasks/:id/assign`       | **Assign a task to a user** _(to implement)_ |
+| Method   | Path                  | Description |
+|----------|-----------------------|-------------|
+| `GET`    | `/tasks`              | List all tasks. Supports `?status=`, `?page=`, and `?limit=` |
+| `POST`   | `/tasks`              | Create a new task |
+| `PUT`    | `/tasks/:id`          | Update a task |
+| `DELETE` | `/tasks/:id`          | Delete a task |
+| `PATCH`  | `/tasks/:id/complete` | Mark a task as complete |
+| `GET`    | `/tasks/stats`        | Counts by status plus overdue count |
+| `PATCH`  | `/tasks/:id/assign`   | Assign a task to a user |
 
 ### Task shape
 
@@ -74,9 +56,10 @@ ASSIGNMENT.md               # Full brief — read this first
   "id": "uuid",
   "title": "string",
   "description": "string",
-  "status": "pending | in-progress | completed",
+  "status": "todo | in_progress | done",
   "priority": "low | medium | high",
   "dueDate": "ISO 8601 or null",
+  "assignee": "string | null",
   "completedAt": "ISO 8601 or null",
   "createdAt": "ISO 8601"
 }
@@ -85,6 +68,7 @@ ASSIGNMENT.md               # Full brief — read this first
 ### Sample requests
 
 **Create a task**
+
 ```bash
 curl -X POST http://localhost:3000/tasks \
   -H "Content-Type: application/json" \
@@ -92,22 +76,53 @@ curl -X POST http://localhost:3000/tasks \
 ```
 
 **List tasks with filter**
+
 ```bash
-curl "http://localhost:3000/tasks?status=pending&page=1&limit=10"
+curl "http://localhost:3000/tasks?status=todo&page=1&limit=10"
 ```
 
 **Mark complete**
+
 ```bash
 curl -X PATCH http://localhost:3000/tasks/<id>/complete
 ```
 
+**Assign a task**
+
+```bash
+curl -X PATCH http://localhost:3000/tasks/<id>/assign \
+  -H "Content-Type: application/json" \
+  -d '{"assignee": "Morgan"}'
+```
+
 ---
 
-## What to Submit
+## Submission Notes
 
-See [ASSIGNMENT.md](./ASSIGNMENT.md) for full submission requirements. At minimum, include:
+- Added Jest + Supertest coverage in `task-api/tests/taskService.test.js` and `task-api/tests/tasks.test.js`.
+- Covered happy paths plus validation and not-found edge cases for the existing API, and added tests for `PATCH /tasks/:id/assign`.
+- Fixed pagination to use one-based page numbers and tightened status filtering to exact matches.
+- Current coverage: `92.2%` statements, `82.75%` branches, `93.33%` functions, `92.14%` lines.
 
-- **Test files** — covering the endpoints and edge cases you identified
-- **Bug report** — what you found, where in the code, and why it's a bug (not just symptoms)
-- **At least one fix** — with a note on your approach
-- **`PATCH /tasks/:id/assign` implementation** — plus a short explanation of any design decisions (validation, edge cases, etc.)
+## Coverage Summary
+
+- Statements: 92.2%
+- Branches: 82.75%
+- Functions: 93.33%
+- Lines: 92.14%
+- Test suites: 2 passed, 2 total
+- Tests: 23 passed, 23 total
+
+![Coverage summary](./docs/coverage-screenshot.png)
+
+### What I'd test next
+
+I'd add tests for malformed JSON requests, invalid query parameters, and a few more edge cases around reassignment behavior. I'd also add more assertions around response shape and timestamp fields to make sure the API contract stays consistent.
+
+### What surprised me
+
+The biggest surprise was that a few important bugs showed up quickly once I started writing tests, especially around pagination and status filtering. They were small pieces of logic, but they would have been easy to miss without both service-level and route-level coverage.
+
+### Questions before shipping
+
+I'd want to confirm whether `PUT /tasks/:id` is meant to behave like a full replacement or a partial update, since the current behavior is closer to partial updates. I'd also ask whether reassigning a task should be allowed, and whether `PATCH /tasks/:id/complete` should preserve the existing priority instead of resetting it.
