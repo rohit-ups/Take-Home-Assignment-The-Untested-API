@@ -6,11 +6,15 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+  const normalizedPage = Number.isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
+  const normalizedLimit = Number.isNaN(limitNum) || limitNum < 1 ? 10 : limitNum;
+  const offset = (normalizedPage - 1) * normalizedLimit;
+  return tasks.slice(offset, offset + normalizedLimit);
 };
 
 const getStats = () => {
@@ -28,7 +32,7 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null, assignee = null }) => {
   const task = {
     id: uuidv4(),
     title,
@@ -38,9 +42,22 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     dueDate,
     completedAt: null,
     createdAt: new Date().toISOString(),
+    assignee,
   };
   tasks.push(task);
   return task;
+};
+
+const assignTask = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const task = tasks[index];
+  if (task.assignee) return null; // caller can detect already assigned separately
+
+  const updated = { ...task, assignee };
+  tasks[index] = updated;
+  return updated;
 };
 
 const update = (id, fields) => {
@@ -90,5 +107,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };

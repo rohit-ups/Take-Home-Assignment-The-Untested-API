@@ -11,6 +11,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Welcome to the Task API" });
+});
+
 const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
