@@ -5,7 +5,7 @@ const validateCreateTask = (body) => {
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
     return 'title is required and must be a non-empty string';
   }
-  if (body.status && !VALID_STATUSES.includes(body.status)) {
+  if (body.status && !VALID_STATUSES.includes(body.status.trim().toLowerCase())) {
     return `status must be one of: ${VALID_STATUSES.join(', ')}`;
   }
   if (body.priority && !VALID_PRIORITIES.includes(body.priority)) {
