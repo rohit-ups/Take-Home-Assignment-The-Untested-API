@@ -115,10 +115,21 @@ See [ASSIGNMENT.md](./ASSIGNMENT.md) for full submission requirements. At minimu
 
 ## Test Coverage
 
-Coverage generated using:
+Test Coverage - 93.28%
 
-npm run coverage
-
-Summary:
-
-All files        | 92.53%
+File             | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-----------------|---------|----------|---------|---------|-------------------
+All files        |   93.28 |       84 |    92.3 |   92.62 |                   
+ src             |   69.23 |       75 |       0 |   69.23 |                   
+  app.js         |   69.23 |       75 |       0 |   69.23 | 10-11,17-18       
+ src/routes      |     100 |       90 |     100 |     100 |                   
+  tasks.js       |     100 |       90 |     100 |     100 | 20-21             
+ src/services    |     100 |      100 |     100 |     100 |                   
+  taskService.js |     100 |      100 |     100 |     100 |                   
+ src/utils       |   78.26 |    73.52 |     100 |   78.26 |                   
+  validators.js  |   78.26 |    73.52 |     100 |   78.26 | 9,12,15,28,31     
+-----------------|---------|----------|---------|---------|-------------------
+Test Suites: 3 failed, 3 total
+Tests:       15 failed, 31 passed, 46 total
+Snapshots:   0 total
+Time:        0.415 s, estimated 1 s
