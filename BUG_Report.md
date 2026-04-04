@@ -256,3 +256,76 @@ Test Suites: 3 failed, 3 total
 Tests:       13 failed, 33 passed, 46 total
 Snapshots:   0 total
 Time:        0.521 s, estimated 1 s
+
+
+
+
+
+# 3️⃣ New Endpoint: `/tasks/:id/assign`
+
+**Purpose:** Assign a task to a user.
+
+## Route (tasks.js)
+```javascript
+router.patch("/tasks/:id/assign", async (req, res) => {
+  try {
+    const { assignee } = req.body;
+    const updatedTask = taskService.assignTask(req.params.id, assignee);
+    if (!updatedTask) return res.status(404).json({ error: "Task not found" });
+    res.json(updatedTask);
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+```
+
+## Service function (taskService.js)
+```javascript
+function assignTask(id, assignee) {
+  if (!assignee || typeof assignee !== "string") return null; // validation
+  const task = tasks.find(t => t.id === id);
+  if (!task) return null;
+  if (task.assignee) return task; // already assigned, do nothing
+  task.assignee = assignee;
+  return task;
+}
+```
+
+## Tests for the new endpoint (`tasks.api.test.js`)
+describe("PATCH /tasks/:id/assign", () => {
+  it("should assign a task to a user", async () => {
+    const task = taskService.create({ title: "Task 1" });
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: "Alice" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.assignee).toBe("Alice");
+  });
+
+  it("should return 404 if task does not exist", async () => {
+    const res = await request(app)
+      .patch(`/tasks/nonexistentid/assign`)
+      .send({ assignee: "Alice" });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("should ignore empty string or invalid assignee", async () => {
+    const task = taskService.create({ title: "Task 2" });
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: "" });
+    expect(res.statusCode).toBe(404); // invalid assignee treated as task not assigned
+  });
+
+  it("should not overwrite existing assignee", async () => {
+task = taskService.create({ title: "Task 3", assignee: "Bob" });
+dconst res = await request(app)
+   .patch(`/tasks/${task.id}/assign`)
+   .send({ assignee: "Charlie" });
+xexpect(res.body.assignee).toBe("Bob"); // assignee remains Bob
+});
+
+✅ Additional Notes:
+- Added new endpoint PATCH /tasks/:id/assign with validation and tests.
+- No new bugs detected related to this feature so far.

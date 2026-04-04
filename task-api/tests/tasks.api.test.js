@@ -211,3 +211,67 @@ describe("PATCH /tasks/:id/complete", () => {
     expect(res.body.error).toBe("Task not found");
   });
 });
+
+
+
+describe("PATCH /tasks/:id/assign", () => {
+
+  let task;
+
+  // Create a fresh task before each test
+  beforeEach(() => {
+    task = taskService.create({ title: "Test Task" });
+  });
+
+  it("should assign a task successfully", async () => {
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: "Alice" });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.assignee).toBe("Alice");
+  });
+
+  it("should return 404 if task does not exist", async () => {
+    const res = await request(app)
+      .patch(`/tasks/nonexistent-id/assign`)
+      .send({ assignee: "Bob" });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe("Task not found");
+  });
+
+  it("should return 400 if assignee is empty string", async () => {
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: "" });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe("Assignee name must be a non-empty string");
+  });
+
+  it("should return 400 if assignee is missing", async () => {
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({});
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe("Assignee name must be a non-empty string");
+  });
+
+  it("should return 400 if task is already assigned", async () => {
+    // First assignment
+    await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: "Charlie" });
+
+    // Second assignment attempt
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: "David" });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe("Task is already assigned");
+  });
+
+});
