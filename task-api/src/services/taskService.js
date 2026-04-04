@@ -6,7 +6,10 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+
+// ✅ Bug fix: updated code that was causing failing test
+const getByStatus = (status) => tasks.filter(t => t.status === status);
 
 const getPaginated = (page, limit) => {
   const offset = page * limit;
