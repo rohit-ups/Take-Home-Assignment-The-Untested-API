@@ -6,7 +6,10 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+
+// ✅ Bug fix: updated code that was causing failing test
+const getByStatus = (status) => tasks.filter(t => t.status === status);
 
 const getPaginated = (page, limit) => {
   const offset = page * limit;
@@ -80,6 +83,30 @@ const _reset = () => {
   tasks = [];
 };
 
+/**
+ * Assign a user to a task
+ * @param {string} taskId 
+ * @param {string} assignee 
+ * @returns updated task or null if task not found
+ */
+function assignTask(taskId, assignee) {
+    if (!assignee || typeof assignee !== "string" || assignee.trim() === "") {
+        throw new Error("Assignee name must be a non-empty string");
+    }
+
+    const task = tasks.find(t => t.id === taskId); // Assuming tasks array exists
+    if (!task) return null; // Task not found
+
+    // Optional: prevent overwriting existing assignee
+    if (task.assignee) {
+        throw new Error("Task is already assigned");
+    }
+
+    task.assignee = assignee.trim();
+    return task;
+}
+
+
 module.exports = {
   getAll,
   findById,
@@ -90,5 +117,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };

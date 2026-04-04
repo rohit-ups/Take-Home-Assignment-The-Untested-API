@@ -69,4 +69,20 @@ router.patch('/:id/complete', (req, res) => {
   res.json(task);
 });
 
+// PATCH /tasks/:id/assign
+router.patch("/:id/assign", (req, res) => {
+    const { id } = req.params;
+    const { assignee } = req.body;
+
+    try {
+        const updatedTask = taskService.assignTask(id, assignee);
+        if (!updatedTask) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+        return res.json(updatedTask);
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+});
+
 module.exports = router;
