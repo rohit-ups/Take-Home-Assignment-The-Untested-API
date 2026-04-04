@@ -391,3 +391,309 @@ describe('Bug 12 — PUT with status=done sets completedAt automatically', () =>
     expect(isNaN(parsed.getTime())).toBe(false);
   });
 });
+
+// ─────────────────────────────────────────────
+// COVERAGE: GET /stats
+// ─────────────────────────────────────────────
+describe('Coverage — GET /tasks/stats', () => {
+  test('should return counts of todo, in_progress, done and overdue', async () => {
+    await request(app).post('/tasks').send({ title: 'Task 1', status: 'todo' });
+    await request(app).post('/tasks').send({ title: 'Task 2', status: 'in_progress' });
+    await request(app).post('/tasks').send({ title: 'Task 3', status: 'done' });
+
+    const res = await request(app).get('/tasks/stats');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('todo');
+    expect(res.body).toHaveProperty('in_progress');
+    expect(res.body).toHaveProperty('done');
+    expect(res.body).toHaveProperty('overdue');
+    expect(res.body.todo).toBe(1);
+    expect(res.body.in_progress).toBe(1);
+    expect(res.body.done).toBe(1);
+  });
+
+  test('should count overdue tasks correctly', async () => {
+    // Manually inject an overdue task by bypassing validator
+    taskService.create({
+      title: 'Overdue task',
+      status: 'todo',
+      dueDate: '2020-01-01T00:00:00.000Z',
+    });
+
+    const res = await request(app).get('/tasks/stats');
+    expect(res.body.overdue).toBe(1);
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: DELETE /tasks/:id
+// ─────────────────────────────────────────────
+describe('Coverage — DELETE /tasks/:id', () => {
+  test('should delete an existing task and return 204', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Task to delete' });
+    const id = create.body.id;
+
+    const res = await request(app).delete(`/tasks/${id}`);
+    expect(res.statusCode).toBe(204);
+  });
+
+  test('should return 404 when deleting a non-existent task', async () => {
+    const res = await request(app).delete('/tasks/non-existent-id');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Task not found');
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: PATCH /tasks/:id/complete — 404 case
+// ─────────────────────────────────────────────
+describe('Coverage — PATCH /tasks/:id/complete 404', () => {
+  test('should return 404 when completing a non-existent task', async () => {
+    const res = await request(app).patch('/tasks/non-existent-id/complete');
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Task not found');
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: Invalid limit values (Bug 11 branches)
+// ─────────────────────────────────────────────
+describe('Coverage — invalid limit values', () => {
+  test('should reject limit=0', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=0');
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('should reject limit=-5', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=-5');
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('should reject non-numeric limit', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=abc');
+    expect(res.statusCode).toBe(400);
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: Pagination empty page
+// ─────────────────────────────────────────────
+describe('Coverage — pagination edge cases', () => {
+  test('should return empty array for page beyond available results', async () => {
+    await request(app).post('/tasks').send({ title: 'Only task' });
+
+    const res = await request(app).get('/tasks?page=99&limit=10');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: validateUpdateTask dueDate branches
+// ─────────────────────────────────────────────
+describe('Coverage — PUT dueDate validation', () => {
+  test('should reject past dueDate in PUT', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Test task' });
+    const id = create.body.id;
+
+    const res = await request(app).put(`/tasks/${id}`).send({
+      dueDate: '2020-01-01T00:00:00.000Z',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('should reject far future dueDate in PUT', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Test task' });
+    const id = create.body.id;
+
+    const res = await request(app).put(`/tasks/${id}`).send({
+      dueDate: '2091-01-01T00:00:00.000Z',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('should reject string "null" as dueDate in PUT', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Test task' });
+    const id = create.body.id;
+
+    const res = await request(app).put(`/tasks/${id}`).send({
+      dueDate: 'null',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('should return 404 for PUT on non-existent task', async () => {
+    const res = await request(app).put('/tasks/non-existent-id').send({
+      title: 'Updated title',
+    });
+    expect(res.statusCode).toBe(404);
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: 500 error handler
+// ─────────────────────────────────────────────
+describe('Coverage — 500 error handler', () => {
+  test('should return 500 when an unexpected error occurs', async () => {
+    // Temporarily break getAll to throw
+    jest.spyOn(taskService, 'getAll').mockImplementationOnce(() => {
+      throw new Error('Unexpected error');
+    });
+
+    const res = await request(app).get('/tasks');
+    expect(res.statusCode).toBe(500);
+    expect(res.body.error).toBe('Internal server error');
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: Invalid limit values
+// ─────────────────────────────────────────────
+describe('Bug 11 — limit query param validation', () => {
+  test('should reject limit=0', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=0');
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  test('should reject limit=-5 (negative limit)', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=-5');
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  test('should reject limit=abc (non-numeric limit)', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=abc');
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  test('should reject limit=99999 (absurdly large)', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=99999');
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  test('should accept valid limit=10', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=10');
+    expect(res.statusCode).toBe(200);
+  });
+
+  test('should accept limit=1 (minimum valid)', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=1');
+    expect(res.statusCode).toBe(200);
+  });
+
+  test('should accept limit=100 (maximum valid)', async () => {
+    const res = await request(app).get('/tasks?page=1&limit=100');
+    expect(res.statusCode).toBe(200);
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: app.js lines 17-18
+// ─────────────────────────────────────────────
+describe('Coverage — app.js startup block', () => {
+  test('app module exports a valid express app', () => {
+    expect(app).toBeDefined();
+    expect(typeof app).toBe('function'); // express app is a function
+    expect(typeof app.listen).toBe('function');
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: tasks.js line 27 — limit fallback
+// ─────────────────────────────────────────────
+describe('Coverage — limit provided without page', () => {
+  test('should use default page=1 when only limit is provided', async () => {
+    await request(app).post('/tasks').send({ title: 'Task A' });
+    await request(app).post('/tasks').send({ title: 'Task B' });
+
+    const res = await request(app).get('/tasks?limit=1');
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBe(1);
+  });
+
+  test('should use default limit=10 when only page is provided', async () => {
+    const res = await request(app).get('/tasks?page=1');
+    expect(res.statusCode).toBe(200);
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: taskService.js line 22 — findById
+// ─────────────────────────────────────────────
+describe('Coverage — findById via completeTask', () => {
+  test('completeTask should return null for non-existent id', () => {
+    const result = taskService.completeTask('non-existent-id');
+    expect(result).toBeNull();
+  });
+
+  test('findById should return undefined for non-existent id', () => {
+    const result = taskService.findById('non-existent-id');
+    expect(result).toBeUndefined();
+  });
+
+  test('findById should return the correct task', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Find me' });
+    const id = create.body.id;
+
+    const result = taskService.findById(id);
+    expect(result).toBeDefined();
+    expect(result.id).toBe(id);
+    expect(result.title).toBe('Find me');
+  });
+});
+
+// ─────────────────────────────────────────────
+// COVERAGE: validators.js lines 15, 22, 25, 28
+// — these branches via PUT (validateUpdateTask)
+// ─────────────────────────────────────────────
+describe('Coverage — validateUpdateTask dueDate all branches', () => {
+  let taskId;
+
+  beforeEach(async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Test task' });
+    taskId = create.body.id;
+  });
+
+  // Line 15 — string "null" check in validateUpdateTask
+  test('PUT should reject dueDate string "null"', async () => {
+    const res = await request(app).put(`/tasks/${taskId}`).send({
+      dueDate: 'null',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  // Line 25 — past date check in validateUpdateTask
+  test('PUT should reject past dueDate', async () => {
+    const res = await request(app).put(`/tasks/${taskId}`).send({
+      dueDate: '2020-06-15T10:00:00.000Z',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  // Line 28 — far future check in validateUpdateTask
+  test('PUT should reject far future dueDate', async () => {
+    const res = await request(app).put(`/tasks/${taskId}`).send({
+      dueDate: '2091-01-01T00:00:00.000Z',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  // Line 22 — wrong format (fails regex, not isNaN) in validateUpdateTask
+  test('PUT should reject wrongly formatted dueDate', async () => {
+    const res = await request(app).put(`/tasks/${taskId}`).send({
+      dueDate: '01-01-2026',
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  // Happy path — valid dueDate in PUT
+  test('PUT should accept valid future dueDate', async () => {
+    const res = await request(app).put(`/tasks/${taskId}`).send({
+      dueDate: '2026-12-01T10:00:00.000Z',
+    });
+    expect(res.statusCode).toBe(200);
+  });
+});
