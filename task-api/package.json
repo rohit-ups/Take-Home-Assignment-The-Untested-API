@@ -4,7 +4,7 @@
   "description": "Task Manager API",
   "main": "src/app.js",
   "scripts": {
-    "start": "node src/app.js",
+    "start": "node src/server.js",
     "test": "jest",
     "coverage": "jest --coverage"
   },
