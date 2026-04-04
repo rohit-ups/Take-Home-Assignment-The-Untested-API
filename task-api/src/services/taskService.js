@@ -36,6 +36,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee: null,       // new field — null by default
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -76,6 +77,26 @@ const completeTask = (id) => {
   return updated;
 };
 
+// New — assign a task to a person
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  // Return a specific signal if task is already assigned to someone else
+  if (task.assignee && task.assignee !== assignee.trim()) {
+    return { alreadyAssigned: true, task };
+  }
+
+  const updated = {
+    ...task,
+    assignee: assignee.trim(),
+  };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return { alreadyAssigned: false, task: updated };
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +111,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
