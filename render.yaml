@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: task-api
+    runtime: node
+    rootDir: task-api
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /tasks
+    autoDeploy: true
