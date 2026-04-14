@@ -1,19 +1,70 @@
 # Bug Report
 
-## Bug 1: Status Filter Inexact Matching
-- **Expected Behavior:** Searching by status (e.g. `?status=todo`) should strictly return tasks with exactly that status.
-- **Actual Behavior:** Searching for `status="do"` returns both `"todo"` and `"done"` tasks.
-- **How I discovered it:** Writing unit tests for `getByStatus` in `taskService.js`; observing that `.includes(status)` was used instead of strict `===` equality.
-- **Proposed Fix:** Change `tasks.filter((t) => t.status.includes(status))` to `tasks.filter((t) => t.status === status)`.
+Three bugs were found while writing the test suite. All three have been fixed.
 
-## Bug 2: Task Completion Overwrites Priority
-- **Expected Behavior:** Marking a task as complete should set its status to `"done"` and update `completedAt`, but leave its `priority` untouched.
-- **Actual Behavior:** The `completeTask` method explicitly sets `priority: 'medium'`, resetting high or low priority entries to medium.
-- **How I discovered it:** Writing the unit test for `completeTask()` in `taskService.js` and asserting the `priority` remains the same.
-- **Proposed Fix:** Remove `priority: 'medium'` from the updated object in the `completeTask` function.
+---
 
-## Bug 3: Pagination Defaults to Page 1 on Page 0 Request
-- **Expected Behavior:** Passing `?page=0&limit=10` should evaluate to `page=0` and return the first 10 items.
-- **Actual Behavior:** The server processes `parseInt('0') || 1`, determining `0` is falsy and forcing `page = 1`. This leads to skipping the first page in 0-indexed systems.
-- **How I discovered it:** Writing the integration test (`GET /tasks?page=0&limit=2`) and seeing that instead of 2 items returned, only 1 was returned (offset was shifted).
-- **Proposed Fix:** Use stricter falsy checks `isNaN(parseInt(page)) ? 1 : parseInt(page)`.
+## Bug 1: Status filter does partial string matching
+
+**Expected behavior:**
+`GET /tasks?status=todo` should return only tasks with status exactly equal to `"todo"`.
+
+**Actual behavior:**
+The original `getByStatus` implementation used `.includes(status)`, which matches substrings. A query like `?status=do` would incorrectly return both `"todo"` and `"done"` tasks.
+
+**How I found it:**
+While writing a unit test for `getByStatus` in `taskService.js`, I added a case that searched for the partial string `"do"` and expected zero results. The test failed — both `todo` and `done` tasks came back.
+
+**Fix applied** (`src/services/taskService.js` line 9):
+```js
+// Before
+const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+
+// After
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
+```
+
+---
+
+## Bug 2: Completing a task silently resets its priority
+
+**Expected behavior:**
+Marking a task complete should update `status` to `"done"` and set `completedAt`. All other fields — including `priority` — should stay exactly as they were.
+
+**Actual behavior:**
+The `completeTask` function was spreading the task and then hardcoding `priority: 'medium'`. So a `"high"` priority task would silently become `"medium"` when completed. No error, no warning — just quiet data corruption.
+
+**How I found it:**
+I wrote a test that created a task with `priority: 'high'`, called `completeTask`, and asserted the priority hadn't changed. The assertion failed. I traced it back to a stray field in the return object inside `completeTask`.
+
+**Fix applied** (`src/services/taskService.js` lines 63–76):
+```js
+// Removed the line:
+priority: 'medium',
+// from the updated task spread inside completeTask()
+```
+
+---
+
+## Bug 3: Page 0 is treated as page 1
+
+**Expected behavior:**
+The API uses zero-based pagination internally (offset = page × limit). A request with `?page=0&limit=10` should return results starting at index 0.
+
+**Actual behavior:**
+The original route handler used `parseInt(page) || 1`. Since `0` is falsy in JavaScript, `parseInt('0') || 1` evaluates to `1`, silently skipping to the second page. So page 0 and page 1 would return the same results.
+
+**How I found it:**
+I wrote an integration test for `GET /tasks?page=0&limit=2` that expected the first two tasks. The test returned the wrong set — offset was one page ahead.
+
+**Fix applied** (`src/routes/tasks.js` lines 20–22):
+```js
+// Before
+const pageNum = parseInt(page) || 1;
+
+// After
+const parsedPage = parseInt(page);
+const pageNum = isNaN(parsedPage) ? 1 : parsedPage;
+```
+
+This correctly defaults to `1` when the query param is missing or non-numeric, while allowing `0` through as a valid page number.
