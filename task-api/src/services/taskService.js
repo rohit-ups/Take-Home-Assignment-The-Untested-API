@@ -6,11 +6,13 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const pageNum = Number.isInteger(page) && page > 0 ? page : 1;
+  const limitNum = Number.isInteger(limit) && limit > 0 ? limit : 10;
+  const offset = (pageNum - 1) * limitNum;
+  return tasks.slice(offset, offset + limitNum);
 };
 
 const getStats = () => {
@@ -28,13 +30,21 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({
+  title,
+  description = '',
+  status = 'todo',
+  priority = 'medium',
+  dueDate = null,
+  assignee = null,
+}) => {
   const task = {
     id: uuidv4(),
     title,
     description,
     status,
     priority,
+    assignee,
     dueDate,
     completedAt: null,
     createdAt: new Date().toISOString(),
