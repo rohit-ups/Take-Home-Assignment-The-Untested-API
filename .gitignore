@@ -1,23 +1,15 @@
-# Evaluation internals
-RUBRIC.md
+# Dependencies
+task-api/node_modules/
 
-# Node
-node_modules/
-coverage/
-.nyc_output/
+# Test / tooling output
+task-api/coverage/
+*.log
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# OS
+# OS / editor
 .DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
 .idea/
-*.swp
-*.swo
-*~
+.vscode/
+
+# Env (if added later)
+.env
+.env.*
