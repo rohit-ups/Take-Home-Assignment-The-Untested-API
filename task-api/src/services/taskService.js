@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 
 let tasks = [];
 
@@ -6,10 +6,12 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  // Expected: page 1 begins at offset 0, page 2 begins at offset limit.
+  // Actual bug: offset was computed as page * limit, causing the first page to skip items.
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -20,7 +22,7 @@ const getStats = () => {
 
   tasks.forEach((t) => {
     if (counts[t.status] !== undefined) counts[t.status]++;
-    if (t.dueDate && t.status !== 'done' && new Date(t.dueDate) < now) {
+    if (t.dueDate && t.status !== "done" && new Date(t.dueDate) < now) {
       overdue++;
     }
   });
@@ -28,7 +30,14 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({
+  title,
+  description = "",
+  status = "todo",
+  priority = "medium",
+  dueDate = null,
+  assignee = null,
+}) => {
   const task = {
     id: uuidv4(),
     title,
@@ -36,6 +45,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -48,6 +58,19 @@ const update = (id, fields) => {
   if (index === -1) return null;
 
   const updated = { ...tasks[index], ...fields };
+  tasks[index] = updated;
+  return updated;
+};
+
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = {
+    ...task,
+    assignee,
+  };
+  const index = tasks.findIndex((t) => t.id === id);
   tasks[index] = updated;
   return updated;
 };
@@ -66,8 +89,8 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
-    status: 'done',
+    priority: "medium",
+    status: "done",
     completedAt: new Date().toISOString(),
   };
 
@@ -90,5 +113,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
