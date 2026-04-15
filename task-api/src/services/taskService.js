@@ -6,10 +6,10 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -28,7 +28,7 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null, assignee = null }) => {
   const task = {
     id: uuidv4(),
     title,
@@ -36,6 +36,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -47,7 +48,16 @@ const update = (id, fields) => {
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  // Prevent data injection overwriting id or createdAt
+  const allowedFields = ['title', 'description', 'status', 'priority', 'dueDate', 'assignee'];
+  const sanitizedFields = {};
+  for (const key of allowedFields) {
+    if (fields[key] !== undefined) {
+      sanitizedFields[key] = fields[key];
+    }
+  }
+
+  const updated = { ...tasks[index], ...sanitizedFields };
   tasks[index] = updated;
   return updated;
 };
@@ -66,7 +76,6 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };

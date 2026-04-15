@@ -14,6 +14,9 @@ const validateCreateTask = (body) => {
   if (body.dueDate && isNaN(Date.parse(body.dueDate))) {
     return 'dueDate must be a valid ISO date string';
   }
+  if (body.assignee !== undefined && (typeof body.assignee !== 'string' || body.assignee.trim() === '')) {
+    return 'assignee must be a non-empty string if provided';
+  }
   return null;
 };
 
@@ -29,6 +32,9 @@ const validateUpdateTask = (body) => {
   }
   if (body.dueDate && isNaN(Date.parse(body.dueDate))) {
     return 'dueDate must be a valid ISO date string';
+  }
+  if (body.assignee !== undefined && (typeof body.assignee !== 'string' || body.assignee.trim() === '')) {
+    return 'assignee must be a non-empty string if provided';
   }
   return null;
 };

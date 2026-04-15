@@ -27,6 +27,17 @@ router.get('/', (req, res) => {
   res.json(tasks);
 });
 
+router.get('/:id', (req, res) => {
+  if (req.params.id === 'stats') {
+    return; // stats handled above, though technically Express matches routes in order so this may not be strictly necessary
+  }
+  const task = taskService.findById(req.params.id);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  res.json(task);
+});
+
 router.post('/', (req, res) => {
   const error = validateCreateTask(req.body);
   if (error) {
@@ -58,6 +69,20 @@ router.delete('/:id', (req, res) => {
   }
 
   res.status(204).send();
+});
+
+router.patch('/:id/assign', (req, res) => {
+  const { assignee } = req.body;
+  if (assignee === undefined || typeof assignee !== 'string' || assignee.trim() === '') {
+    return res.status(400).json({ error: 'assignee is required and must be a non-empty string' });
+  }
+
+  const task = taskService.update(req.params.id, { assignee });
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
 });
 
 router.patch('/:id/complete', (req, res) => {
