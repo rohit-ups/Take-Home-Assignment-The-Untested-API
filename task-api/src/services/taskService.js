@@ -6,10 +6,11 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  // Fix: standard pagination offset is (page - 1) * limit
+  const offset = (page > 0 ? page - 1 : 0) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -36,6 +37,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee: null,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -47,7 +49,13 @@ const update = (id, fields) => {
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  // Fix: Do not allow overwriting protected fields
+  const safeFields = { ...fields };
+  delete safeFields.id;
+  delete safeFields.createdAt;
+  delete safeFields.completedAt;
+
+  const updated = { ...tasks[index], ...safeFields };
   tasks[index] = updated;
   return updated;
 };
@@ -66,11 +74,20 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };
 
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = { ...task, assignee };
   const index = tasks.findIndex((t) => t.id === id);
   tasks[index] = updated;
   return updated;
@@ -90,5 +107,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
