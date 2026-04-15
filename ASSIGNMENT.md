@@ -1,123 +1,56 @@
-# Take-Home Assignment: The Untested API
+# Task Manager API - Assignment Documentation
 
-**Estimated time:** 2 days
-**Stack:** Node.js, Express, Jest, Supertest
+## Part 1: Bug Report
+During the initial code review of `routes/tasks.js`, `services/taskService.js`, and `utils/validators.js`, several logical bugs and missing requirements were identified.
 
----
+### Bug 1: Pagination Logic Flaw
+- **Location:** `services/taskService.js` (function `getPaginated`)
+- **Technical Explanation:** The previous logic calculated the pagination offset as `page * limit`. Since the route sets `page = 1` by default for the first page, requesting the first page effectively skipped the first `limit` items (e.g. `1 * 10 = 10`, starting at index 10). Pages should be 1-indexed relative to an offset starting at 0.
 
-## Overview
+### Bug 2: Status Filter Inaccuracy
+- **Location:** `services/taskService.js` (function `getByStatus`)
+- **Technical Explanation:** The filter evaluated statuses using `t.status.includes(status)` instead of strict equality `===`. This loose match meant searching for the status 'do' would accidentally return tasks marked as both 'todo' and 'done', undermining accurate filtering. 
 
-You've been handed the codebase for a small Task Manager API. It was written quickly, has no tests, and is heading to production. Your job: write the tests, find what's broken, fix something, and add a feature.
+### Bug 3: Unintended Priority Reset on Completion
+- **Location:** `services/taskService.js` (function `completeTask`)
+- **Technical Explanation:** When completing a task, the function hardcoded a status change to `done` but simultaneously hardcoded `priority: 'medium'`. This was an unintended side-effect, as marking a critical (high priority) task as complete shouldn't rewrite its priority severity.
 
-This mirrors the actual work — reading unfamiliar code, deciding what to test, catching bugs through testing rather than guessing, and shipping something new with confidence.
+### Bug 4: Missing Task Retrieval by ID
+- **Location:** `routes/tasks.js`
+- **Technical Explanation:** A standard REST API requires the ability to fetch a single entity. While the service implementation `findById` existed, the router missed a `GET /tasks/:id` endpoint exposing this functionality.
 
----
-
-## Setup
-
-```bash
-cd task-api
-npm install
-npm start        # runs on port 3000
-npm test         # run tests
-npm run coverage # run tests + coverage report
-```
-
-The API uses an in-memory store — no database setup needed. Data resets on restart.
+### Bug 5: Data Injection Vulnerability (Over-posting)
+- **Location:** `services/taskService.js` (function `update`) and `utils/validators.js`
+- **Technical Explanation:** `validateUpdateTask` only checked known keys but didn't strip unknown ones. `taskService.update` then spread `fields` blindly into the task object (`{ ...tasks[index], ...fields }`). This allowed users to inject arbitrary data properties (e.g., `isAdmin: true`) or overwrite system-managed fields like `id` and `createdAt`.
 
 ---
 
-## The API
+## Part 2: Bug Fix Approaches
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /tasks | List all tasks |
-| GET | /tasks?status=todo | Filter by status |
-| GET | /tasks?page=1&limit=10 | Paginated list |
-| POST | /tasks | Create a task |
-| PUT | /tasks/:id | Update a task |
-| DELETE | /tasks/:id | Delete a task |
-| PATCH | /tasks/:id/complete | Mark as complete |
-| GET | /tasks/stats | Counts by status + overdue count |
+**Fix 1: Pagination:**
+Changed the calculation to `const offset = (page - 1) * limit;` to ensure the first page correctly starts at index 0 without skipping data.
 
-### Task shape
+**Fix 2: Status Filter:**
+Refactored the method to check `t.status === status`.
 
-```json
-{
-  "id": "uuid",
-  "title": "string",
-  "description": "string",
-  "status": "todo | in_progress | done",
-  "priority": "low | medium | high",
-  "dueDate": "ISO string | null",
-  "completedAt": "ISO string | null",
-  "createdAt": "ISO string"
-}
-```
+**Fix 3: Completion Logic:**
+Removed `priority: 'medium'` from the mutated object, preserving the task's original priority when marked as done.
+
+**Fix 4: Read by ID Route:**
+Created `router.get('/:id')` checking if the task exists and returning a 404 if not found (with a slight guard to pass `/stats` properly in the router stack).
+
+**Fix 5: Safe Property Assigning:**
+Updated `taskService.update` to instantiate an iterating loop that verifies keys against a localized `allowedFields` array (`['title', 'description', 'status', 'priority', 'dueDate', 'assignee']`). This sanitizes the payload directly before spreading, securing the entity structure.
 
 ---
 
-## Day 1 — Read & Test
+## Part 3: Design Decisions for `PATCH /tasks/:id/assign`
 
-1. Read through the source code in `src/`. Get familiar with it.
-2. Run the server and poke at the endpoints manually if that helps.
-3. Write tests in the `tests/` folder covering:
-   - Unit tests for `taskService.js` functions directly
-   - Integration tests for the API routes (use Supertest)
-   - At minimum: happy path for each endpoint + at least 2 edge cases
-4. Aim for **80%+ coverage** — run `npm run coverage` to check.
+**Feature Objective:** Implement the ability to assign a task to a user securely.
 
-**Deliverable:** Committed tests with coverage output (paste the summary or attach a screenshot).
-
----
-
-## Day 2 — Find & Build
-
-### Part A: Bug Report
-
-Review your test results. Write a short bug report (markdown file or inline comments) for any bugs you found. For each bug include:
-
-- What the expected behavior is
-- What actually happens
-- How you discovered it
-- What a fix would look like (you don't have to fix them all)
-
-### Part B: Fix one bug
-
-Pick one bug and fix it. Update any tests that should now pass.
-
-### Part C: New feature
-
-Add this endpoint:
-
-```
-PATCH /tasks/:id/assign
-Body: { "assignee": "string" }
-```
-
-- Accepts a name (string) and stores it on the task object
-- Returns the updated task
-- Should return 404 if the task doesn't exist
-- Think about what validation makes sense. What should happen if `assignee` is an empty string? What if the task is already assigned?
-
-Write tests for the new endpoint before or alongside the implementation.
-
-**Deliverable:** Bug report, fix, and new endpoint with tests.
-
----
-
-## Submission
-
-Push your work to a branch or fork and share the link. Include a short note (a few sentences) on:
-
-- What you'd test next if you had more time
-- Anything that surprised you in the codebase
-- Any questions you'd ask before shipping this to production
-
----
-
-## Notes
-
-- Don't worry about perfecting the codebase beyond what's asked.
-- Tests should test behavior, not implementation details.
-- There's no trick setup — what you see is what you get.
+**Decisions:**
+1. **Schema Update:** I added an `assignee` field to the object creation schema initialized to `null`.
+2. **Dedicated Route vs. Put Update:** While a `PUT /tasks/:id` could technically update the assignee due to Fix #5 explicitly adding it to `allowedFields`, adding `PATCH /tasks/:id/assign` provides better semantic design and API clarity for explicit assignment events.
+3. **Route Extraction & Validation:** The handler strips `req.body.assignee`. Instead of leaning fully into the global validator where the field is optional, the route enforces that `assignee` must be a non-empty string. This returns a `400 Bad Request` if skipped.
+4. **Resiliency Validation Update:** I also updated `validators.js` so that `validateUpdateTask` and `validateCreateTask` correctly restrict `assignee` to be a non-empty string *if provided at all*, closing any loopholes during broad `PUT` requests.
+5. **Handling "Not Found":** Similar to other specific patches, the route checks if `taskService.update` returned `null` and successfully dispatches a `404 Not Found`.
