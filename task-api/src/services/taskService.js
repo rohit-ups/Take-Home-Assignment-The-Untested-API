@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 
 let tasks = [];
 
@@ -20,7 +20,7 @@ const getStats = () => {
 
   tasks.forEach((t) => {
     if (counts[t.status] !== undefined) counts[t.status]++;
-    if (t.dueDate && t.status !== 'done' && new Date(t.dueDate) < now) {
+    if (t.dueDate && t.status !== "done" && new Date(t.dueDate) < now) {
       overdue++;
     }
   });
@@ -28,7 +28,13 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({
+  title,
+  description = "",
+  status = "todo",
+  priority = "medium",
+  dueDate = null,
+}) => {
   const task = {
     id: uuidv4(),
     title,
@@ -36,6 +42,8 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    // assignee: null means unassigned
+    assignee: null,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -64,11 +72,33 @@ const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
 
+  // GUARD: Already-completed tasks are returned unchanged (idempotent).
+  if (task.status === "done") return task;
+
+  // FIX: Removed hardcoded priority reset — completing a task should
+  // preserve its existing priority, not silently downgrade it.
+
   const updated = {
     ...task,
-    priority: 'medium',
-    status: 'done',
+    status: "done",
     completedAt: new Date().toISOString(),
+  };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
+// assignTask: stores an assignee name on a task.
+// Overwrites existing assignee — reassignment is intentionally allowed.
+// Trimming handles accidental whitespace from API consumers.
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = {
+    ...task,
+    assignee: assignee.trim(),
   };
 
   const index = tasks.findIndex((t) => t.id === id);
@@ -90,5 +120,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
