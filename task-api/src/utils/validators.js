@@ -33,4 +33,28 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+/*
+ * validateAssignTask: validates the body for PATCH /tasks/:id/assign.
+ * Rejects null, non-string, empty, whitespace-only, and excessively long names.
+ * The 100-char limit is a reasonable guard against unbounded input.
+ */
+const validateAssignTask = (body) => {
+  if (body === null || body === undefined) {
+    return 'Request body is required';
+  }
+  if (body.assignee === undefined) {
+    return 'assignee is required';
+  }
+  if (typeof body.assignee !== 'string') {
+    return 'assignee must be a string';
+  }
+  if (body.assignee.trim() === '') {
+    return 'assignee cannot be empty or whitespace';
+  }
+  if (body.assignee.trim().length > 100) {
+    return 'assignee name cannot exceed 100 characters';
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };

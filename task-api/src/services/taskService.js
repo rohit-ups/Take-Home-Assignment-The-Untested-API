@@ -36,6 +36,8 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    // assignee: null means unassigned
+    assignee: null,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -81,6 +83,23 @@ const completeTask = (id) => {
   return updated;
 };
 
+// assignTask: stores an assignee name on a task.
+// Overwrites existing assignee — reassignment is intentionally allowed.
+// Trimming handles accidental whitespace from API consumers.
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = {
+    ...task,
+    assignee: assignee.trim(),
+  };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -95,5 +114,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };

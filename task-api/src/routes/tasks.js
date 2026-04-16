@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const taskService = require('../services/taskService');
-const { validateCreateTask, validateUpdateTask } = require('../utils/validators');
+const { validateCreateTask, validateUpdateTask, validateAssignTask } = require('../utils/validators');
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
@@ -67,6 +67,29 @@ router.patch('/:id/complete', (req, res) => {
   }
 
   res.json(task);
+});
+
+/*
+ * PATCH /tasks/:id/assign
+ * Assigns a task to a named person.
+ * Design decisions:
+ *   - Reassignment is allowed (overwrites existing assignee).
+ *   - Assignee is trimmed server-side to avoid whitespace inconsistencies.
+ *   - No user list validation — assignee is a free-form string by design.
+ *     (In production, this would validate against a users collection.)
+ */
+router.patch('/:id/assign', (req, res) => {
+  const error = validateAssignTask(req.body);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  const task = taskService.assignTask(req.params.id, req.body.assignee.trim());
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.status(200).json(task);
 });
 
 module.exports = router;
