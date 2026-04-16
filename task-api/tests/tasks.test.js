@@ -1,6 +1,11 @@
 const request = require("supertest");
 const app = require("../src/app");
 const taskService = require("../src/services/taskService");
+const {
+  validateAssignTask,
+  validateCreateTask,
+  validateUpdateTask,
+} = require("../src/utils/validators");
 
 const createSeedTask = (overrides = {}) => {
   const suffix = Math.random().toString(16).slice(2, 8);
@@ -240,6 +245,16 @@ describe("UNIT TESTS (taskService.js directly)", () => {
 
       expect(stats.overdue).toBe(1);
     });
+
+    test("ignores unknown status values in count buckets", () => {
+      createSeedTask({ status: "archived" });
+
+      const stats = taskService.getStats();
+
+      expect(stats.todo).toBe(0);
+      expect(stats.in_progress).toBe(0);
+      expect(stats.done).toBe(0);
+    });
   });
 
   describe("update()", () => {
@@ -338,6 +353,100 @@ describe("UNIT TESTS (taskService.js directly)", () => {
 
       expect(second.completedAt).toBe(first.completedAt);
     });
+  });
+});
+
+describe("UNIT TESTS (validators.js directly)", () => {
+  test("validateCreateTask rejects invalid status values", () => {
+    const error = validateCreateTask({
+      title: "Task",
+      status: "pending",
+    });
+
+    expect(error).toBe("status must be one of: todo, in_progress, done");
+  });
+
+  test("validateUpdateTask rejects invalid dueDate values", () => {
+    const error = validateUpdateTask({ dueDate: "not-a-date" });
+
+    expect(error).toBe("dueDate must be a valid ISO date string");
+  });
+
+  test("validateUpdateTask rejects empty title values", () => {
+    const error = validateUpdateTask({ title: "   " });
+
+    expect(error).toBe("title must be a non-empty string");
+  });
+
+  test("validateUpdateTask rejects invalid status values", () => {
+    const error = validateUpdateTask({ status: "pending" });
+
+    expect(error).toBe("status must be one of: todo, in_progress, done");
+  });
+
+  test("validateUpdateTask rejects invalid priority values", () => {
+    const error = validateUpdateTask({ priority: "urgent" });
+
+    expect(error).toBe("priority must be one of: low, medium, high");
+  });
+
+  test("validateAssignTask rejects null body", () => {
+    expect(validateAssignTask(null)).toBe("Request body is required");
+  });
+
+  test("validateAssignTask rejects undefined assignee", () => {
+    expect(validateAssignTask({})).toBe("assignee is required");
+  });
+
+  test("validateAssignTask rejects non-string assignee", () => {
+    expect(validateAssignTask({ assignee: 42 })).toBe(
+      "assignee must be a string",
+    );
+  });
+
+  test("validateAssignTask rejects empty string assignee", () => {
+    expect(validateAssignTask({ assignee: "" })).toBe(
+      "assignee cannot be empty or whitespace",
+    );
+  });
+
+  test("validateAssignTask rejects whitespace-only assignee", () => {
+    expect(validateAssignTask({ assignee: "   \t\n" })).toBe(
+      "assignee cannot be empty or whitespace",
+    );
+  });
+
+  test("validateAssignTask rejects assignee longer than 100 chars", () => {
+    const tooLong = "a".repeat(101);
+
+    expect(validateAssignTask({ assignee: tooLong })).toBe(
+      "assignee name cannot exceed 100 characters",
+    );
+  });
+
+  test("validateAssignTask returns null for a valid assignee", () => {
+    expect(validateAssignTask({ assignee: "  Alice  " })).toBeNull();
+  });
+});
+
+describe("UNIT TESTS (app bootstrap)", () => {
+  test("startServer listens on provided port and logs startup message", () => {
+    const listenSpy = jest
+      .spyOn(app, "listen")
+      .mockImplementation((port, callback) => {
+        if (callback) callback();
+        return { close: jest.fn() };
+      });
+
+    const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+
+    app.startServer(4321);
+
+    expect(listenSpy).toHaveBeenCalledWith(4321, expect.any(Function));
+    expect(logSpy).toHaveBeenCalledWith("Task API running on port 4321");
+
+    logSpy.mockRestore();
+    listenSpy.mockRestore();
   });
 });
 
@@ -466,6 +575,16 @@ describe("INTEGRATION TESTS (API routes via Supertest)", () => {
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/dueDate/i);
     });
+
+    test("returns 500 when body is JSON null and validator throws", async () => {
+      const response = await request(app)
+        .post("/tasks")
+        .set("Content-Type", "application/json")
+        .send("null");
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({ error: "Internal server error" });
+    });
   });
 
   describe("PUT /tasks/:id", () => {
@@ -491,6 +610,17 @@ describe("INTEGRATION TESTS (API routes via Supertest)", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.error).toMatch(/not found/i);
+    });
+
+    test("returns 400 when update payload has invalid dueDate", async () => {
+      const task = createSeedTask({ title: "Needs valid dueDate" });
+
+      const response = await request(app)
+        .put(`/tasks/${task.id}`)
+        .send({ dueDate: "not-a-date" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/dueDate/i);
     });
 
     // Known bug: empty update payload is currently accepted instead of rejected.

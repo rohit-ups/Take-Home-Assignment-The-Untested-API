@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 
 let tasks = [];
 
@@ -20,7 +20,7 @@ const getStats = () => {
 
   tasks.forEach((t) => {
     if (counts[t.status] !== undefined) counts[t.status]++;
-    if (t.dueDate && t.status !== 'done' && new Date(t.dueDate) < now) {
+    if (t.dueDate && t.status !== "done" && new Date(t.dueDate) < now) {
       overdue++;
     }
   });
@@ -28,7 +28,13 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({
+  title,
+  description = "",
+  status = "todo",
+  priority = "medium",
+  dueDate = null,
+}) => {
   const task = {
     id: uuidv4(),
     title,
@@ -67,14 +73,14 @@ const completeTask = (id) => {
   if (!task) return null;
 
   // GUARD: Already-completed tasks are returned unchanged (idempotent).
-  if (task.status === 'done') return task;
+  if (task.status === "done") return task;
 
-  // FIX: Removed hardcoded priority reset — completing a task should 
+  // FIX: Removed hardcoded priority reset — completing a task should
   // preserve its existing priority, not silently downgrade it.
 
   const updated = {
     ...task,
-    status: 'done',
+    status: "done",
     completedAt: new Date().toISOString(),
   };
 
