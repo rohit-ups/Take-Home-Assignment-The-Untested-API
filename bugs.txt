@@ -1,0 +1,17 @@
+Bug 1: getByStatus uses .includes()
+problem: status = "do" -> matches "done" WRONG
+Fix: tasks.filter((t) => t.status === status);
+
+Bug 2: getPaginated offset logic
+Problem: Page usually starts from 1, not 0.
+Fix: const offset = (page - 1) * limit;
+
+Bug 3: completeTask resets priority
+Problem: User’s priority gets overwritten 
+Fix: priority: task.priority
+
+Bug 4: update() and create() allows invalid fields
+problem: update(id, { randomField: 123 }) -> not controlled
+fix: traverse through keys of body and validate in validators.js
+
+Bug 5: replaced status code from 204 to 200 for DELETE task route
