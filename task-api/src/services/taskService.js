@@ -64,9 +64,14 @@ const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
 
+  // GUARD: Already-completed tasks are returned unchanged (idempotent).
+  if (task.status === 'done') return task;
+
+  // FIX: Removed hardcoded priority reset — completing a task should 
+  // preserve its existing priority, not silently downgrade it.
+
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };
