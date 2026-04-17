@@ -80,3 +80,35 @@ export const assignTask = async (taskId, assigneeId) => {
   await task.save();
   return task;
 };
+
+export const getStats = async () => {
+  const stats = await Task.aggregate([
+    { $match: { isDeleted: false } },
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const overdueCount = await Task.countDocuments({
+    isDeleted: false,
+    status: { $ne: 'done' },
+    dueDate: { $lt: new Date() },
+  });
+
+  const formattedStats = stats.reduce((acc, curr) => {
+    acc[curr._id] = curr.count;
+    return acc;
+  }, {});
+
+  return {
+    counts: {
+      todo: formattedStats.todo || 0,
+      'in-progress': formattedStats['in-progress'] || 0,
+      done: formattedStats.done || 0,
+    },
+    overdueCount,
+  };
+};

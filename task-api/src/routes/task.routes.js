@@ -14,6 +14,19 @@ const router = express.Router();
  */
 
 router.use(auth);
+/**
+ * @swagger
+ * /tasks/stats:
+ *   get:
+ *     summary: Get task statistics
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+router.get('/stats', taskController.getStats);
 
 /**
  * @swagger

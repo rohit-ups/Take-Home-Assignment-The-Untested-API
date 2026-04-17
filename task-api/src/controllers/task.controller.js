@@ -60,3 +60,11 @@ export const assignTask = asyncHandler(async (req, res) => {
     data: task,
   });
 });
+
+export const getStats = asyncHandler(async (req, res) => {
+  const stats = await taskService.getStats();
+  res.status(200).json({
+    success: true,
+    data: stats,
+  });
+});

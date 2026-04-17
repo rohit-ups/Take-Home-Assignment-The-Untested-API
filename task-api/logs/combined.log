@@ -9,3 +9,8 @@
 {"level":"error","message":"[POST] /api/auth/register >> 400 Email already in use","timestamp":"2026-04-17 19:16:22"}
 {"level":"error","message":"[PATCH] /api/tasks/non-existent-uuid >> 404 Task not found","timestamp":"2026-04-17 19:16:23"}
 {"level":"error","message":"[POST] /api/tasks/708718f0-f187-4441-86cd-c134f41ccc27/assign >> 400 Invalid user ID","timestamp":"2026-04-17 19:16:23"}
+{"level":"error","message":"[POST] /api/tasks >> 401 Please authenticate","timestamp":"2026-04-17 19:24:04"}
+{"level":"error","message":"[POST] /api/tasks >> 400 Required","timestamp":"2026-04-17 19:24:04"}
+{"level":"error","message":"[POST] /api/auth/register >> 400 Email already in use","timestamp":"2026-04-17 19:24:04"}
+{"level":"error","message":"[PATCH] /api/tasks/non-existent-uuid >> 404 Task not found","timestamp":"2026-04-17 19:24:04"}
+{"level":"error","message":"[POST] /api/tasks/038181be-5492-4440-8384-f312ccea6a19/assign >> 400 Invalid user ID","timestamp":"2026-04-17 19:24:05"}
