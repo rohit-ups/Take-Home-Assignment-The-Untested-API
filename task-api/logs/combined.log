@@ -1,0 +1,6 @@
+{"level":"error","message":"[POST] /api/tasks >> 401 Please authenticate","timestamp":"2026-04-17 18:12:25"}
+{"level":"error","message":"[POST] /api/tasks >> 400 Required","timestamp":"2026-04-17 18:12:26"}
+{"level":"error","message":"[POST] /api/tasks >> 401 Please authenticate","timestamp":"2026-04-17 18:13:49"}
+{"level":"error","message":"[POST] /api/tasks >> 400 Required","timestamp":"2026-04-17 18:13:49"}
+{"level":"error","message":"[POST] /api/tasks >> 401 Please authenticate","timestamp":"2026-04-17 18:16:52"}
+{"level":"error","message":"[POST] /api/tasks >> 400 Required","timestamp":"2026-04-17 18:16:52"}

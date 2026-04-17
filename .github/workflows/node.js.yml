@@ -1,0 +1,34 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: task-api/package-lock.json
+    - name: Install dependencies
+      run: npm install
+      working-directory: task-api
+    - name: Run tests
+      run: npm test
+      working-directory: task-api
+      env:
+        MONGODB_URI: mongodb://localhost:27017/test
+        JWT_SECRET: test_secret_key_for_ci
+        NODE_ENV: test
