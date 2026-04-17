@@ -81,8 +81,39 @@ docker-compose up --build
 
 ## 📖 API Documentation
 
-The API Documentation is powered by Swagger. Once the server is running, visit:
-👉 **[http://localhost:5000/api-docs](http://localhost:5000/api-docs)**
+Interactive documentation is available at `/api-docs` via Swagger.
+
+### 🚀 API Examples (Quick Start)
+
+#### 1. Register a User
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"name": "John Doe", "email": "john@example.com", "password": "password123"}'
+```
+
+#### 2. Create a Task (Requires Token)
+```bash
+curl -X POST http://localhost:5000/api/tasks \
+-H "Authorization: Bearer YOUR_TOKEN_HERE" \
+-H "Content-Type: application/json" \
+-d '{"title": "Complete Assignment", "priority": "high", "status": "todo"}'
+```
+
+#### 3. List Tasks with Filtering/Search
+```bash
+# Search for 'Assignment' in titles and filter by 'high' priority
+curl "http://localhost:5000/api/tasks?search=Assignment&priority=high" \
+-H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+#### 4. Assign a Task
+```bash
+curl -X POST http://localhost:5000/api/tasks/TASK_UUID/assign \
+-H "Authorization: Bearer YOUR_TOKEN_HERE" \
+-H "Content-Type: application/json" \
+-d '{"assigneeId": "USER_ID_HERE"}'
+```
 
 ## 🧪 Testing
 

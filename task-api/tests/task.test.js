@@ -65,6 +65,38 @@ describe('Task API', () => {
 
       expect(res.status).toBe(400);
     });
+
+    it('should return 400 when registering with an existing email', async () => {
+      const userData = { name: 'Test User', email: 'test@example.com', password: 'password123' };
+      const res = await request(app).post('/api/auth/register').send(userData);
+      expect(res.status).toBe(400);
+      expect(res.body.message).toBe('Email already in use');
+    });
+  });
+
+  describe('PATCH /api/tasks/:id', () => {
+    it('should return 404 when updating a non-existent task', async () => {
+      const res = await request(app)
+        .patch('/api/tasks/non-existent-uuid')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ title: 'New Title' });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/tasks/:id/assign', () => {
+    it('should return 400 for an invalid assignee ID format', async () => {
+      const task = await Task.create({ title: 'Task for Assignment', creator: user._id });
+      
+      const res = await request(app)
+        .post(`/api/tasks/${task.uuid}/assign`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ assigneeId: 'invalid-id' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('Invalid user ID');
+    });
   });
 
   describe('GET /api/tasks', () => {
