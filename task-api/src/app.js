@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Task API running on port ${PORT}`);
+    console.log(`Task API running on port http://localhost:${PORT}`);
   });
 }
 
