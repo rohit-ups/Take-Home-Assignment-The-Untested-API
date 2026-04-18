@@ -8,8 +8,18 @@ const findById = (id) => tasks.find((t) => t.id === id);
 
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
+/**
+ * Returns a paginated slice of the tasks array.
+ *
+ * FIX: Changed `page * limit` to `(page - 1) * limit`.
+ * Pages are 1-indexed (page=1 is the first page), so we need to subtract 1
+ * before multiplying to calculate the correct zero-based offset.
+ *
+ * Before the fix, page 1 with limit 10 would start at index 10,
+ * completely skipping the first 10 tasks.
+ */
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -76,6 +86,30 @@ const completeTask = (id) => {
   return updated;
 };
 
+/**
+ * Assigns a user to an existing task.
+ *
+ * Design decisions:
+ * - Reassignment is allowed: if the task already has an assignee, it is
+ *   overwritten. This mirrors real workflows where tasks get reassigned.
+ * - Completed tasks can be assigned: no restriction on task status, because
+ *   assignment is metadata — useful for auditing or retrospectives.
+ * - The assignee string is stored as-is (trimming is handled at the route
+ *   layer to keep the service layer focused on data operations).
+ *
+ * @param {string} id - UUID of the task to assign
+ * @param {string} assignee - Name of the person to assign the task to
+ * @returns {object|null} The updated task, or null if not found
+ */
+const assignTask = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const updated = { ...tasks[index], assignee };
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +124,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
