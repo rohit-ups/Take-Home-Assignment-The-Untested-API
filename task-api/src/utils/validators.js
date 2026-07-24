@@ -1,6 +1,17 @@
 const VALID_STATUSES = ['todo', 'in_progress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
+const validateAssignTask = (body) => {
+  if (
+    !body.assignee ||
+    typeof body.assignee !== "string" ||
+    body.assignee.trim() === ""
+  ) {
+    return "assignee is required and must be a non-empty string";
+  }
+
+  return null;
+};
 const validateCreateTask = (body) => {
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
     return 'title is required and must be a non-empty string';
@@ -33,4 +44,4 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+module.exports = { validateAssignTask, validateCreateTask, validateUpdateTask };
