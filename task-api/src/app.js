@@ -13,10 +13,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
+/* istanbul ignore next */
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Task API running on port ${PORT}`);
   });
 }
+
 
 module.exports = app;
