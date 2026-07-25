@@ -121,6 +121,15 @@ describe('update', () => {
     });
 });
 
+describe('remove', () => {
+    test('delete existing task and return true', () => {
+        const created = Service.create({ title: 'To delete' });
+        const result = Service.remove(created.id);
+        expect(result).toBe(true);
+        expect(Service.findById(created.id)).toBeUndefined();
+    });
+});
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
@@ -174,6 +183,11 @@ describe('Edge Cases', () => {
     //update: invalid id or unknown id
     test('return null when the id does not exist', () => {
         expect(Service.update('nope', { title: 'X' })).toBeNull();
+    });
+
+    //remove: invalid id or unknown id
+    test('return false when the id does not exist', () => {
+        expect(Service.remove('nope')).toBe(false);
     });
 });
 
