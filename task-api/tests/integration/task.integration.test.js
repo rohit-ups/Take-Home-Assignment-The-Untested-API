@@ -152,3 +152,28 @@ describe('PUT /tasks/:id', () => {
         expect(res.status).toBe(400);
     });
 });
+
+describe('DELETE /tasks/:id', () => {
+    test('deletes an existing task and returns 204', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'To delete' });
+        const res = await request(app).delete(`/tasks/${create.body.id}`);
+        expect(res.status).toBe(204);
+        
+        const getRes = await request(app).get('/tasks');
+        expect(getRes.body).toHaveLength(0);
+    });
+
+    // Edge case: unknown id
+    test('returns 404 when the task does not exist', async () => {
+        const res = await request(app).delete('/tasks/does-not-exist');
+        expect(res.status).toBe(404);
+    });
+
+    // Edge case: deleting twice
+    test('returns 404 on a second delete of the same id', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'Once' });
+        await request(app).delete(`/tasks/${create.body.id}`);
+        const res = await request(app).delete(`/tasks/${create.body.id}`);
+        expect(res.status).toBe(404);
+    });
+});
