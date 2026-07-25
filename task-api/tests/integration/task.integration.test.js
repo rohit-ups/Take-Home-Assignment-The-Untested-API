@@ -101,3 +101,27 @@ describe('GET /tasks', () => {
         expect(Array.isArray(res.body)).toBe(true);
     });
 });
+
+describe('GET /tasks/stats', () => {
+    test('returns zeroed stats when there are no tasks', async () => {
+        const res = await request(app).get('/tasks/stats');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ todo: 0, in_progress: 0, done: 0, overdue: 0 });
+    });
+
+    test('reflects created and completed tasks', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'A' });
+        await request(app).patch(`/tasks/${create.body.id}/complete`);
+
+        const res = await request(app).get('/tasks/stats');
+        expect(res.body.done).toBe(1);
+        expect(res.body.todo).toBe(0);
+    });
+
+    // Edge case: ensures /stats isn't shadowed by any dynamic /:id-style route
+    test('is reachable at /tasks/stats without colliding with an :id route', async () => {
+        const res = await request(app).get('/tasks/stats');
+        expect(res.status).toBe(200);
+        expect(res.body).not.toHaveProperty('error');
+    });
+});
