@@ -29,9 +29,10 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null, assignee = null }) => {
   const task = {
     id: uuidv4(),
+    assignee,
     title,
     description,
     status,
@@ -80,6 +81,16 @@ const completeTask = (id) => {
   return updated;
 };
 
+const changeAssignee = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index].assignee = assignee;
+
+  return tasks[index];
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -94,5 +105,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  changeAssignee,
   _reset,
 };

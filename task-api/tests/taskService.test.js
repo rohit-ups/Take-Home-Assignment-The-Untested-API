@@ -318,4 +318,49 @@ describe('taskService', () => {
       expect(stored.completedAt).not.toBeNull();
     });
   });
+
+  // ── changeAssignee ──────────────────────────────────────────────────────────
+  describe('changeAssignee', () => {
+    it('sets the assignee on the task and returns the updated task', () => {
+      const task = makeTask();
+      const result = taskService.changeAssignee(task.id, 'Alice');
+      expect(result.assignee).toBe('Alice');
+    });
+
+    it('returns the updated task object (not a stale snapshot)', () => {
+      const task = makeTask();
+      const result = taskService.changeAssignee(task.id, 'Bob');
+      // The returned object must already contain the new assignee
+      expect(result.assignee).toBe('Bob');
+    });
+
+    it('persists the assignee in the store', () => {
+      const task = makeTask();
+      taskService.changeAssignee(task.id, 'Carol');
+      expect(taskService.findById(task.id).assignee).toBe('Carol');
+    });
+
+    it('overwrites a previously set assignee', () => {
+      const task = makeTask();
+      taskService.changeAssignee(task.id, 'Alice');
+      taskService.changeAssignee(task.id, 'Bob');
+      expect(taskService.findById(task.id).assignee).toBe('Bob');
+    });
+
+    it('returns null for a non-existent task id', () => {
+      expect(taskService.changeAssignee('no-such-id', 'Alice')).toBeNull();
+    });
+
+    it('does not modify any other task in the store', () => {
+      const t1 = makeTask({ title: 'Task 1' });
+      const t2 = makeTask({ title: 'Task 2' });
+      taskService.changeAssignee(t1.id, 'Alice');
+      expect(taskService.findById(t2.id).assignee).toBeNull();
+    });
+
+    it('new tasks start with assignee set to null', () => {
+      const task = makeTask();
+      expect(task.assignee).toBeNull();
+    });
+  });
 });
