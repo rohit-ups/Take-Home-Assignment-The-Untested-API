@@ -1,5 +1,9 @@
 const Service = require('../../src/services/taskService');
 
+beforeEach(() => {
+    Service._reset();
+});
+
 describe('create', () => {
     test('create task with defaults', () => {
         const task = Service.create({ title: 'New Task Create' });
@@ -37,6 +41,22 @@ describe('find by Id', () => {
     });
 });
 
+describe('getAll', () => {
+    test('return all tasks', () => {
+      Service.create({ title: 'A' });
+      Service.create({ title: 'B' });
+      Service.create({ title: 'C' });
+      Service.create({ title: 'D' });
+      Service.create({ title: 'E' });
+      Service.create({ title: 'F' });
+      expect(Service.getAll()).toHaveLength(6);
+    });
+
+    test('return empty array when there are no tasks', () => {
+      expect(Service.getAll()).toEqual([]);
+    });
+});
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
@@ -48,5 +68,13 @@ describe('Edge Cases', () => {
     //find by Id: invalid id or unknown id
     test('return undefined when the id does not exist', () => {
       expect(Service.findById('invalid-id')).toBeUndefined();
+    });
+
+    //getAll: return copy if the tasks not the reference so that it not change in the internal array
+    test('return copy, not reference to the internal array', () => {
+      Service.create({ title: 'A' });
+      const list = Service.getAll();
+      list.push({ id: 'fake' });
+      expect(Service.getAll()).toHaveLength(1);
     });
 });
