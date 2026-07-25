@@ -33,4 +33,19 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+// added a validation to status as status could be anything a server would return empty array []
+const validateGetTask = (status) => {
+  if (status && !VALID_STATUSES.includes(status)) {
+    return `status must be one of: ${VALID_STATUSES.join(', ')}`;
+  }
+  return null;
+};
+
+const validateAssignee = (assignee) => {
+  if (!assignee || typeof assignee !== 'string' || assignee.trim() === '') {
+    return 'assignee is required and it should be a string'
+  }
+  return null
+}
+
+module.exports = { validateCreateTask, validateUpdateTask, validateGetTask, validateAssignee };

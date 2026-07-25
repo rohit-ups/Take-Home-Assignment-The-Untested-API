@@ -6,10 +6,11 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// fix: include() could miss match "do" for "done" so replaced it
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -28,9 +29,10 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null, assignee = null }) => {
   const task = {
     id: uuidv4(),
+    assignee,
     title,
     description,
     status,
@@ -43,11 +45,14 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
   return task;
 };
 
-const update = (id, fields) => {
-  const index = tasks.findIndex((t) => t.id === id);
+
+// Added a safe feild so that the user can't update the id, createdAt or completedAt fields
+const update = (todoid, fields) => {
+  const index = tasks.findIndex((t) => t.id === todoid);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  const { id, createdAt, completedAt, ...safeFields} = fields
+  const updated = { ...tasks[index], ...safeFields };
   tasks[index] = updated;
   return updated;
 };
@@ -64,9 +69,9 @@ const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
 
+// fix: the priority of the todo was changed to medium while updating, so removed the line
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };
@@ -74,6 +79,16 @@ const completeTask = (id) => {
   const index = tasks.findIndex((t) => t.id === id);
   tasks[index] = updated;
   return updated;
+};
+
+const changeAssignee = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index].assignee = assignee;
+
+  return tasks[index];
 };
 
 const _reset = () => {
@@ -90,5 +105,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  changeAssignee,
   _reset,
 };
