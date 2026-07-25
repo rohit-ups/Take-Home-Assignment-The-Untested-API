@@ -130,6 +130,15 @@ describe('remove', () => {
     });
 });
 
+describe('completeTask', () => {
+    test('sets status to done and stamps completedAt', () => {
+        const created = Service.create({ title: 'Finish me' });
+        const completed = Service.completeTask(created.id);
+        expect(completed.status).toBe('done');
+        expect(completed.completedAt).not.toBeNull();
+    });
+});
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
@@ -189,6 +198,11 @@ describe('Edge Cases', () => {
     test('return false when the id does not exist', () => {
         expect(Service.remove('nope')).toBe(false);
     });
+
+    //completeTask: invalid id or unknown id
+    test('return null when the id does not exist', () => {
+        expect(Service.completeTask('nope')).toBeNull();
+    });
 });
 
 describe('Bugs', () => {
@@ -203,5 +217,14 @@ describe('Bugs', () => {
         }
         const page = Service.getPaginated(1, 10);
         expect(page[0].title).toBe('Task 1');
+    });
+
+    //BUG 2: completing a task silently resets its priority to 'medium', even if it was originally 'high' or 'low'.
+    //Actual (bug): completeTask hardcodes priority: 'medium'
+    //After (bug fix): completeTask priority will be the original priority it is saved
+    test('save the original priority when completing a task', () => {
+        const created = Service.create({ title: 'High priority', priority: 'high' });
+        const completed = Service.completeTask(created.id);
+        expect(completed.priority).toBe('high'); 
     });
 });
