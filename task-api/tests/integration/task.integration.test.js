@@ -177,3 +177,29 @@ describe('DELETE /tasks/:id', () => {
         expect(res.status).toBe(404);
     });
 });
+
+describe('PATCH /tasks/:id/complete', () => {
+    test('marks a task complete and sets completedAt', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'Finish me' });
+        const res = await request(app).patch(`/tasks/${create.body.id}/complete`);
+        
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('done');
+        expect(res.body.completedAt).not.toBeNull();
+    });
+
+    // Edge case: unknown id
+    test('returns 404 when the task does not exist', async () => {
+        const res = await request(app).patch('/tasks/does-not-exist/complete');
+        expect(res.status).toBe(404);
+    });
+
+    // Edge case: completing an already-completed task should be idempotent, not error
+    test('completing an already-completed task still returns 200', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'Twice' });
+        await request(app).patch(`/tasks/${create.body.id}/complete`);
+        const res = await request(app).patch(`/tasks/${create.body.id}/complete`);
+        expect(res.status).toBe(200);
+        expect(res.body.status).toBe('done');
+    });
+});
