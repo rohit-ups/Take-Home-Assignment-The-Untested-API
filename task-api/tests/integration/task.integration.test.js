@@ -125,3 +125,30 @@ describe('GET /tasks/stats', () => {
         expect(res.body).not.toHaveProperty('error');
     });
 });
+
+describe('PUT /tasks/:id', () => {
+    test('updates an existing task and returns it', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'Original' });
+        const res = await request(app)
+          .put(`/tasks/${create.body.id}`)
+          .send({ title: 'Updated' });
+        
+        expect(res.status).toBe(200);
+        expect(res.body.title).toBe('Updated');
+    });
+
+    // Edge case: unknown id
+    test('returns 404 when the task does not exist', async () => {
+        const res = await request(app).put('/tasks/does-not-exist').send({ title: 'X' });
+        expect(res.status).toBe(404);
+    });
+
+    // Edge case: invalid field value on update
+    test('returns 400 when priority is invalid', async () => {
+        const create = await request(app).post('/tasks').send({ title: 'A' });
+        const res = await request(app)
+          .put(`/tasks/${create.body.id}`)
+          .send({ priority: 'urgent' });
+        expect(res.status).toBe(400);
+    });
+});
