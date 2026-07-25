@@ -228,3 +228,40 @@ describe('Bugs', () => {
         expect(completed.priority).toBe('high'); 
     });
 });
+
+
+describe('assignTask', () => {
+    test('assigns a task and returns the updated task', () => {
+        const created = Service.create({ title: 'Needs an owner' });
+        const updated = Service.assignTask(created.id, 'Alice');
+        
+        expect(updated.assignee).toBe('Alice');
+        expect(updated.id).toBe(created.id);
+    });
+
+    test('preserves other fields when assigning', () => {
+        const created = Service.create({
+          title: 'Preserve me',
+          priority: 'high',
+          status: 'in_progress',
+        });
+        const updated = Service.assignTask(created.id, 'Bob');
+
+        expect(updated.title).toBe('Preserve me');
+        expect(updated.priority).toBe('high');
+        expect(updated.status).toBe('in_progress');
+    });
+
+    test('trims surrounding whitespace from the assignee name', () => {
+        const created = Service.create({ title: 'Trim me' });
+        const updated = Service.assignTask(created.id, '  Charlie  ');
+        expect(updated.assignee).toBe('Charlie');
+    });
+});
+
+describe('assignTask Edge Cases', () => {
+    // Edge case: invalid id or unknown id
+    test('returns null when the task does not exist', () => {
+        expect(Service.assignTask('nope', 'Alice')).toBeNull();
+    });
+});
