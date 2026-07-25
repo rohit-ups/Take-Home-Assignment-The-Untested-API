@@ -88,6 +88,30 @@ describe('getPaginated', () => {
     });
 });
 
+describe('getStats', () => {
+    test('count tasks by status', () => {
+        Service.create({ title: 'A', status: 'todo' });
+        Service.create({ title: 'B', status: 'todo' });
+        Service.create({ title: 'C', status: 'in_progress' });
+        Service.create({ title: 'D', status: 'done' });
+        
+        const stats = Service.getStats();
+        expect(stats.todo).toBe(2);
+        expect(stats.in_progress).toBe(1);
+        expect(stats.done).toBe(1);
+    });
+
+    test('count overdue tasks (past due date, not done)', () => {
+        Service.create({
+          title: 'Overdue Task',
+          status: 'todo',
+          dueDate: '2020-01-01T00:00:00.000Z',
+        });
+        const stats = Service.getStats();
+        expect(stats.overdue).toBe(1);
+    });
+});
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
@@ -125,6 +149,17 @@ describe('Edge Cases', () => {
         }
         const page = Service.getPaginated(1, 100);
         expect(page.length).toBeLessThanOrEqual(25);
+    });
+
+    //getStats: overdue but already done should NOT count as overdue
+    test('don\'t count a done task with a past due date as overdue', () => {
+        Service.create({
+          title: 'Done but late',
+          status: 'done',
+          dueDate: '2020-01-01T00:00:00.000Z',
+        });
+        const stats = Service.getStats();
+        expect(stats.overdue).toBe(0);
     });
 });
 
