@@ -112,6 +112,15 @@ describe('getStats', () => {
     });
 });
 
+describe('update', () => {
+    test('updates only the provided fields, leaving others intact', () => {
+        const created = Service.create({ title: 'Original', priority: 'low' });
+        const updated = Service.update(created.id, { title: 'Updated' });
+        expect(updated.title).toBe('Updated');
+        expect(updated.priority).toBe('low');
+    });
+});
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
@@ -160,6 +169,11 @@ describe('Edge Cases', () => {
         });
         const stats = Service.getStats();
         expect(stats.overdue).toBe(0);
+    });
+
+    //update: invalid id or unknown id
+    test('return null when the id does not exist', () => {
+        expect(Service.update('nope', { title: 'X' })).toBeNull();
     });
 });
 
