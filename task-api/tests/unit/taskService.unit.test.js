@@ -29,11 +29,24 @@ describe('create', () => {
     }); 
 });
 
+describe('find by Id', () => {
+    test('return task on existed', () => {
+        const task = Service.create({ title: 'find existed' });
+        const found = Service.findById(task.id);
+        expect(found).toBe(task);
+    });
+});
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
       const a = Service.create({ title: 'A' });
       const b = Service.create({ title: 'B' });
       expect(a.id).not.toBe(b.id);
+    });
+
+    //find by Id: invalid id or unknown id
+    test('return undefined when the id does not exist', () => {
+      expect(Service.findById('invalid-id')).toBeUndefined();
     });
 });
