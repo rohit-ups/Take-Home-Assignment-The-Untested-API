@@ -203,3 +203,111 @@ describe('PATCH /tasks/:id/complete', () => {
         expect(res.body.status).toBe('done');
     });
 });
+
+
+describe('PATCH /tasks/:id/assign', () => {
+  test('assigns a task and returns the updated task', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Needs an owner' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Alice');
+    expect(res.body.id).toBe(create.body.id);
+  });
+
+  test('trims surrounding whitespace from the assignee name', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Trim me' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: '  Bob  ' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Bob');
+  });
+
+  test('preserves other fields on the task', async () => {
+    const create = await request(app)
+      .post('/tasks')
+      .send({ title: 'Preserve me', priority: 'high', status: 'in_progress' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: 'Carol' });
+
+    expect(res.body.title).toBe('Preserve me');
+    expect(res.body.priority).toBe('high');
+    expect(res.body.status).toBe('in_progress');
+  });
+
+  // Edge case: unknown id
+  test('returns 404 when the task does not exist', async () => {
+    const res = await request(app)
+      .patch('/tasks/does-not-exist/assign')
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toMatch(/not found/i);
+  });
+
+  // Edge case: missing assignee entirely
+  test('returns 400 when assignee is missing', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'No assignee' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/assignee/i);
+  });
+
+  // Edge case: empty string assignee
+  test('returns 400 when assignee is an empty string', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Empty assignee' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: '' });
+
+    expect(res.status).toBe(400);
+  });
+
+  // Edge case: whitespace-only assignee
+  test('returns 400 when assignee is only whitespace', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Whitespace assignee' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: '   ' });
+
+    expect(res.status).toBe(400);
+  });
+
+  // Edge case: non-string assignee (number)
+  test('returns 400 when assignee is not a string', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Bad type' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: 12345 });
+
+    expect(res.status).toBe(400);
+  });
+
+  // Edge case: reassigning a task that already has an assignee overwrites it
+  test('overwrites an existing assignee on reassignment', async () => {
+    const create = await request(app).post('/tasks').send({ title: 'Reassign me' });
+    await request(app).patch(`/tasks/${create.body.id}/assign`).send({ assignee: 'Alice' });
+
+    const res = await request(app)
+      .patch(`/tasks/${create.body.id}/assign`)
+      .send({ assignee: 'Bob' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Bob');
+  });
+});
