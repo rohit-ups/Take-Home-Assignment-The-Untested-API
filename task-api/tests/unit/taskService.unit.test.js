@@ -68,6 +68,25 @@ describe('getByStatus', () => {
   });
 });
 
+describe('getPaginated', () => {
+    test('returns the correct page size', () => {
+        Service._reset();
+        for (let i = 1; i <= 25; i++) {
+            Service.create({ title: `Task ${i}` });
+        }
+        const page = Service.getPaginated(1, 10);
+        expect(page).toHaveLength(10);
+    });
+
+    test('return empty array for a page past the end of the data', () => {
+        Service._reset();
+        for (let i = 1; i <= 25; i++) {
+            Service.create({ title: `Task ${i}` });
+        }
+        const page = Service.getPaginated(10, 10);
+        expect(page).toEqual([]);
+    });
+});
 
 describe('Edge Cases', () => {
     //create: duplicate id check
@@ -96,5 +115,30 @@ describe('Edge Cases', () => {
         Service._reset();
         Service.create({ title: 'A', status: 'todo' });
         expect(Service.getByStatus('done')).toEqual([]);
+    });
+
+    //getPaginated: limit larger than total tasks
+    test('returns all items when limit exceeds total data length', () => {
+        Service._reset();
+        for (let i = 1; i <= 25; i++) {
+            Service.create({ title: `Task ${i}` });
+        }
+        const page = Service.getPaginated(1, 100);
+        expect(page.length).toBeLessThanOrEqual(25);
+    });
+});
+
+describe('Bugs', () => {
+    //BUG 1: page 1 should return the FIRST `limit` items
+    //required (offset = (page - 1) * limit), but the implementation does offset = page * limit, which skips the first `limit` items entirely.
+    //Actual (bug): offset = 1 * 10 = 10, so page[0].title is 'Task 11'
+    //After (bug fix): offset = (1 - 1) * 10 = 0, so page[0].title is 'Task 1'
+    test('page 1 returns the first 10 items', () => {
+        Service._reset();
+        for (let i = 1; i <= 25; i++) {
+            Service.create({ title: `Task ${i}` });
+        }
+        const page = Service.getPaginated(1, 10);
+        expect(page[0].title).toBe('Task 1');
     });
 });
