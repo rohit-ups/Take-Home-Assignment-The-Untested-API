@@ -57,6 +57,18 @@ describe('getAll', () => {
     });
 });
 
+describe('getByStatus', () => {
+  test('return only tasks matching the given status', () => {
+        Service.create({ title: 'A', status: 'todo' });
+        Service.create({ title: 'B', status: 'in_progress' });
+        Service.create({ title: 'C', status: 'done' });
+        const result = Service.getByStatus('done');
+        expect(result).toHaveLength(1);
+        expect(result[0].title).toBe('C');
+  });
+});
+
+
 describe('Edge Cases', () => {
     //create: duplicate id check
     test('generate unique id for each task', () => {
@@ -77,5 +89,12 @@ describe('Edge Cases', () => {
         const list = Service.getAll();
         list.push({ id: 'fake' });
         expect(Service.getAll()).toHaveLength(1);
+    });
+
+    //getByStatus: status doesn't exist in tasks
+    test('returns an empty array when no tasks match', () => {
+        Service._reset();
+        Service.create({ title: 'A', status: 'todo' });
+        expect(Service.getByStatus('done')).toEqual([]);
     });
 });
