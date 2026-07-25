@@ -249,4 +249,37 @@ describe('Tasks API - Integration Tests', () => {
     expect(res3.statusCode).toBe(200);
   });
 });
+
+describe('GET /tasks (Bug Fix Verification: Filter + Pagination)', () => {
+  it('should combine status filtering and pagination correctly', async () => {
+    // Seed 3 'todo' tasks and 1 'done' task
+    taskService.create({ title: 'Todo 1', status: 'todo' });
+    taskService.create({ title: 'Todo 2', status: 'todo' });
+    taskService.create({ title: 'Todo 3', status: 'todo' });
+    taskService.create({ title: 'Done 1', status: 'done' });
+
+    // Request page 1 with limit 2 for 'todo' tasks only
+    const res = await request(app).get('/tasks?status=todo&page=1&limit=2');
+
+    expect(res.statusCode).toBe(200);
+    // Should return only 2 items (respecting limit), not all 3
+    expect(res.body.length).toBe(2);
+    expect(res.body[0].title).toBe('Todo 1');
+    expect(res.body[1].title).toBe('Todo 2');
+    expect(res.body.every((t) => t.status === 'todo')).toBe(true);
+  });
+
+  it('should return page 2 of filtered status results', async () => {
+    taskService.create({ title: 'Todo 1', status: 'todo' });
+    taskService.create({ title: 'Todo 2', status: 'todo' });
+    taskService.create({ title: 'Todo 3', status: 'todo' });
+
+    // Request page 2 with limit 2 for 'todo' tasks
+    const res = await request(app).get('/tasks?status=todo&page=2&limit=2');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBe(1);
+    expect(res.body[0].title).toBe('Todo 3');
+  });
+});
 });
