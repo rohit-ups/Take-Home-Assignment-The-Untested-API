@@ -15,7 +15,7 @@
 * **Fix Strategy:** Update offset formula from `page * limit` to `Math.max(0, (page - 1) * limit)`.
 
 ---
-## bug 1 and bug 2 are together choosen to be fixed
+## bug 1 and bug 2 are together chosen to be fixed
 
 ---
 

@@ -252,7 +252,7 @@ describe('Tasks API - Integration Tests', () => {
 
 describe('GET /tasks (Bug Fix Verification: Filter + Pagination)', () => {
   it('should combine status filtering and pagination correctly', async () => {
-    // Seed 3 'todo' tasks and 1 'done' task
+    //  3 'todo' tasks and 1 'done' task
     taskService.create({ title: 'Todo 1', status: 'todo' });
     taskService.create({ title: 'Todo 2', status: 'todo' });
     taskService.create({ title: 'Todo 3', status: 'todo' });
@@ -280,6 +280,62 @@ describe('GET /tasks (Bug Fix Verification: Filter + Pagination)', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.length).toBe(1);
     expect(res.body[0].title).toBe('Todo 3');
+  });
+});
+
+// --- PATCH /tasks/:id/assign --- for new feature added
+describe('PATCH /tasks/:id/assign (New Feature)', () => {
+  it('should successfully assign a task to a user (200)', async () => {
+    const task = taskService.create({ title: 'Unassigned Task' });
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Alice' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.assignee).toBe('Alice');
+  });
+
+  it('should overwrite existing assignee when re-assigned', async () => {
+    const task = taskService.create({ title: 'Task', assignee: 'Alice' });
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Bob' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.assignee).toBe('Bob');
+  });
+
+  it('should return 400 when assignee is missing or empty string', async () => {
+    const task = taskService.create({ title: 'Task' });
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: '   ' });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('assignee is required and must be a non-empty string');
+  });
+
+  it('should return 400 when assignee is not a string', async () => {
+    const task = taskService.create({ title: 'Task' });
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 12345 });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toBe('assignee is required and must be a non-empty string');
+  });
+
+  it('should return 404 when assigning a non-existent task', async () => {
+    const res = await request(app)
+      .patch('/tasks/non-existent-id/assign')
+      .send({ assignee: 'Alice' });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body.error).toBe('Task not found');
   });
 });
 });
