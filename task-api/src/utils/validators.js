@@ -32,5 +32,24 @@ const validateUpdateTask = (body) => {
   }
   return null;
 };
+const validateAssignTask = (body) => {
+  const { assignee } = body;
 
-module.exports = { validateCreateTask, validateUpdateTask };
+  if (typeof assignee !== 'string' || assignee.trim() === '') {
+    return 'Assignee name is required and cannot be empty';
+  }
+
+  const trimmed = assignee.trim();
+
+  if (trimmed.length < 2) {
+    return 'Assignee name must be at least 2 characters long';
+  }
+
+  if (trimmed.length > 50) {
+    return 'Assignee name cannot exceed 50 characters';
+  }
+
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };

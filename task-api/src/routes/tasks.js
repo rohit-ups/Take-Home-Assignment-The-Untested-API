@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const taskService = require('../services/taskService');
-const { validateCreateTask, validateUpdateTask } = require('../utils/validators');
+const { validateCreateTask, validateUpdateTask, validateAssignTask } = require('../utils/validators');
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
@@ -33,7 +33,7 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error });
   }
 
-  const task = taskService.create(req.body);
+  const task = taskService.createTask(req.body);
   res.status(201).json(task);
 });
 
@@ -43,21 +43,36 @@ router.put('/:id', (req, res) => {
     return res.status(400).json({ error });
   }
 
-  const task = taskService.update(req.params.id, req.body);
-  if (!task) {
+  const updatedTask = taskService.editTask(req.params.id, req.body);
+  if (!updatedTask) {
     return res.status(404).json({ error: 'Task not found' });
   }
 
-  res.json(task);
+  res.json(updatedTask);
 });
 
+
 router.delete('/:id', (req, res) => {
-  const deleted = taskService.remove(req.params.id);
-  if (!deleted) {
+  const isDeleted = taskService.removeTask(req.params.id);
+  if (!isDeleted) {
     return res.status(404).json({ error: 'Task not found' });
   }
 
   res.status(204).send();
+});
+
+router.patch('/:id/assign', (req, res) => {
+  const error = validateAssignTask(req.body);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  const updatedTask = taskService.assignTask(req.params.id, req.body.assignee.trim());
+  if (!updatedTask) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(updatedTask);
 });
 
 router.patch('/:id/complete', (req, res) => {
@@ -68,5 +83,6 @@ router.patch('/:id/complete', (req, res) => {
 
   res.json(task);
 });
+
 
 module.exports = router;
