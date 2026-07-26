@@ -1,16 +1,16 @@
 const { v4: uuidv4 } = require('uuid');
+const db = require('../utils/db');
 
-let tasks = [];
+const getAll = () => [...db.tasks];
 
-const getAll = () => [...tasks];
+const findById = (id) => db.tasks.find((t) => t.id === id);
 
-const findById = (id) => tasks.find((t) => t.id === id);
-
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// FIXED: Use strict equality instead of .includes()
+const getByStatus = (status) => db.tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const offset = (page - 1) * limit;
+  return db.tasks.slice(offset, offset + limit);
 };
 
 const getStats = () => {
@@ -18,7 +18,7 @@ const getStats = () => {
   const counts = { todo: 0, in_progress: 0, done: 0 };
   let overdue = 0;
 
-  tasks.forEach((t) => {
+  db.tasks.forEach((t) => {
     if (counts[t.status] !== undefined) counts[t.status]++;
     if (t.dueDate && t.status !== 'done' && new Date(t.dueDate) < now) {
       overdue++;
@@ -28,7 +28,7 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const createTask = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
   const task = {
     id: uuidv4(),
     title,
@@ -37,26 +37,29 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     priority,
     dueDate,
     completedAt: null,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   };
-  tasks.push(task);
+
+  db.tasks.push(task);
   return task;
 };
 
-const update = (id, fields) => {
-  const index = tasks.findIndex((t) => t.id === id);
+const editTask = (id, fields) => {
+  const index = db.tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
-  tasks[index] = updated;
-  return updated;
+  // FIXED: Variable names now match exactly
+  const updatedTask = { ...db.tasks[index], ...fields };
+  db.tasks[index] = updatedTask;
+
+  return updatedTask;
 };
 
-const remove = (id) => {
-  const index = tasks.findIndex((t) => t.id === id);
+const removeTask = (id) => {
+  const index = db.tasks.findIndex((t) => t.id === id);
   if (index === -1) return false;
 
-  tasks.splice(index, 1);
+  db.tasks.splice(index, 1);
   return true;
 };
 
@@ -64,20 +67,37 @@ const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
 
-  const updated = {
+  const updatedTask = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
+
   };
 
-  const index = tasks.findIndex((t) => t.id === id);
-  tasks[index] = updated;
-  return updated;
+  const index = db.tasks.findIndex((t) => t.id === id);
+  db.tasks[index] = updatedTask;
+
+  return updatedTask;
 };
 
+const assignTask = (id, assigneeName) => {
+  const index = db.tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const updatedTask = {
+    ...db.tasks[index],
+    assignee: assigneeName
+  };
+  
+  db.tasks[index] = updatedTask;
+  
+  return updatedTask;
+};
+
+
 const _reset = () => {
-  tasks = [];
+  // Safely empties the array without breaking memory references
+  db.tasks.length = 0;
 };
 
 module.exports = {
@@ -86,9 +106,10 @@ module.exports = {
   getByStatus,
   getPaginated,
   getStats,
-  create,
-  update,
-  remove,
+  createTask,
+  editTask,
+  removeTask,
   completeTask,
+  assignTask,
   _reset,
 };
