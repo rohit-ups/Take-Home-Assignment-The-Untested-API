@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const taskService = require('../services/taskService');
-const { validateCreateTask, validateUpdateTask } = require('../utils/validators');
+const { validateCreateTask, validateUpdateTask, validateAssign } = require('../utils/validators');
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
@@ -67,6 +67,21 @@ router.patch('/:id/complete', (req, res) => {
   }
 
   res.json(task);
+});
+
+router.patch('/:id/assign', (req, res) => {
+  const existing = taskService.findById(req.params.id);
+  if (!existing) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  const error = validateAssign(req.body);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  const updated = taskService.assign(req.params.id, req.body.assignee.trim());
+  res.json(updated);
 });
 
 module.exports = router;
