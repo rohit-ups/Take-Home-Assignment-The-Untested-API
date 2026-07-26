@@ -6,11 +6,13 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, limit);
+  const offset = (safePage - 1) * safeLimit;
+  return tasks.slice(offset, offset + safeLimit);
 };
 
 const getStats = () => {
@@ -36,6 +38,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee: null,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -76,6 +79,15 @@ const completeTask = (id) => {
   return updated;
 };
 
+const assign = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const updated = { ...tasks[index], assignee };
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +102,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assign,
   _reset,
 };
