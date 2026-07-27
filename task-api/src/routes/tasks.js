@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const taskService = require('../services/taskService');
-const { validateCreateTask, validateUpdateTask } = require('../utils/validators');
+const { validateCreateTask, validateUpdateTask, validateAssignTask } = require('../utils/validators');
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
@@ -17,8 +17,11 @@ router.get('/', (req, res) => {
   }
 
   if (page !== undefined || limit !== undefined) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    if (isNaN(pageNum) || pageNum < 1 || isNaN(limitNum) || limitNum < 1) {
+      return res.status(400).json({ error: 'Invalid pagination parameters' });
+    }
     const tasks = taskService.getPaginated(pageNum, limitNum);
     return res.json(tasks);
   }
@@ -62,6 +65,21 @@ router.delete('/:id', (req, res) => {
 
 router.patch('/:id/complete', (req, res) => {
   const task = taskService.completeTask(req.params.id);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
+});
+
+router.patch('/:id/assign', (req, res) => {
+  const error = validateAssignTask(req.body);
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  const assignee = req.body.assignee.trim();
+  const task = taskService.assignTask(req.params.id, assignee);
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }
