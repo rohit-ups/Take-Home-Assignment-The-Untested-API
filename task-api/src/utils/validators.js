@@ -1,5 +1,6 @@
 const VALID_STATUSES = ['todo', 'in_progress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
+const READ_ONLY_FIELDS = ["id","createdAt", "completedAt"];
 
 const validateCreateTask = (body) => {
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
@@ -18,6 +19,11 @@ const validateCreateTask = (body) => {
 };
 
 const validateUpdateTask = (body) => {
+  for (const filed of READ_ONLY_FIELDS) {
+    if (body[filed] !== undefined){
+      return `${filed} is a read-only field`;
+    }
+  }
   if (body.title !== undefined && (typeof body.title !== 'string' || body.title.trim() === '')) {
     return 'title must be a non-empty string';
   }
@@ -33,4 +39,12 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+const validateAssignTask = (body) => {
+  if (body.assignee === undefined || typeof body.assignee !== 'string' || body.assignee.trim() === '') {
+    return 'assignee is required and must be a non-empty string';
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };
+
