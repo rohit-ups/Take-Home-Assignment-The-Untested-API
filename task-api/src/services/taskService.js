@@ -6,10 +6,10 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -31,8 +31,8 @@ const getStats = () => {
 const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
   const task = {
     id: uuidv4(),
-    title,
-    description,
+    title: title.trim(),
+    description: typeof description === 'string' ? description.trim() : description,
     status,
     priority,
     dueDate,
@@ -47,7 +47,11 @@ const update = (id, fields) => {
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  const { id: _id, createdAt: _createdAt, completedAt: _completedAt, ...safeFields } = fields;
+  if (typeof safeFields.title === 'string') safeFields.title = safeFields.title.trim();
+  if (typeof safeFields.description === 'string') safeFields.description = safeFields.description.trim();
+
+  const updated = { ...tasks[index], ...safeFields };
   tasks[index] = updated;
   return updated;
 };
@@ -66,7 +70,6 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };
@@ -75,6 +78,8 @@ const completeTask = (id) => {
   tasks[index] = updated;
   return updated;
 };
+
+const assign = (id, assignee) => update(id, { assignee: assignee.trim() });
 
 const _reset = () => {
   tasks = [];
@@ -90,5 +95,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assign,
   _reset,
 };
