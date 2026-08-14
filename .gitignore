@@ -1,0 +1,23 @@
+# Evaluation internals
+RUBRIC.md
+
+# Node
+node_modules/
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
