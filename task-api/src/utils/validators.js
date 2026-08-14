@@ -33,4 +33,4 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+module.exports = { VALID_STATUSES, validateCreateTask, validateUpdateTask };
