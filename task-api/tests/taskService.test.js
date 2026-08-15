@@ -357,3 +357,59 @@ describe('getStats', () => {
     expect(svc.getStats().overdue).toBe(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// BUG-7 regression — validators must reject empty-string enum values
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * These tests live at the service boundary but actually exercise
+ * src/utils/validators.js, which validateCreateTask and validateUpdateTask
+ * both delegate to.
+ *
+ * BUG-7: the original guard `body.status && ...` treats "" as falsy and
+ * skips the check, allowing an empty-string status/priority to be stored.
+ */
+describe('BUG-7 regression – validators.js empty-string bypass', () => {
+  const { validateCreateTask, validateUpdateTask } = require('../src/utils/validators');
+
+  describe('validateCreateTask', () => {
+    test('rejects status: "" with a validation error', () => {
+      const error = validateCreateTask({ title: 'X', status: '' });
+      expect(error).not.toBeNull();
+      expect(error).toMatch(/status/);
+    });
+
+    test('rejects priority: "" with a validation error', () => {
+      const error = validateCreateTask({ title: 'X', priority: '' });
+      expect(error).not.toBeNull();
+      expect(error).toMatch(/priority/);
+    });
+  });
+
+  describe('validateUpdateTask', () => {
+    test('rejects status: "" with a validation error', () => {
+      const error = validateUpdateTask({ status: '' });
+      expect(error).not.toBeNull();
+      expect(error).toMatch(/status/);
+    });
+
+    test('rejects priority: "" with a validation error', () => {
+      const error = validateUpdateTask({ priority: '' });
+      expect(error).not.toBeNull();
+      expect(error).toMatch(/priority/);
+    });
+
+    test('still accepts a valid status update (no regression)', () => {
+      const error = validateUpdateTask({ status: 'done' });
+      expect(error).toBeNull();
+    });
+
+    test('still accepts undefined status (field omitted, no regression)', () => {
+      const error = validateUpdateTask({ title: 'Fine' });
+      expect(error).toBeNull();
+    });
+  });
+});
+

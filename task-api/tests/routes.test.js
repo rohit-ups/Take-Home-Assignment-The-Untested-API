@@ -466,3 +466,57 @@ describe('PATCH /tasks/:id/complete', () => {
     expect(stats.body.overdue).toBe(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUG-7 regression — empty-string enum values must be rejected at HTTP layer
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('BUG-7 regression – empty-string status/priority rejected by API', () => {
+  /**
+   * The validators use `body.status && ...` which treats "" as falsy and skips
+   * the check, allowing an empty string to be stored on the task.
+   * After the fix these must all return 400.
+   */
+
+  test('POST /tasks with status:"" returns 400', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Bad status', status: '' });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('POST /tasks with priority:"" returns 400', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Bad priority', priority: '' });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('PUT /tasks/:id with status:"" returns 400', async () => {
+    const task = await createTask();
+    const res = await request(app)
+      .put(`/tasks/${task.id}`)
+      .send({ status: '' });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('PUT /tasks/:id with priority:"" returns 400', async () => {
+    const task = await createTask();
+    const res = await request(app)
+      .put(`/tasks/${task.id}`)
+      .send({ priority: '' });
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('no regression – POST with valid status still returns 201', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Fine', status: 'in_progress' });
+    expect(res.status).toBe(201);
+  });
+});
+
