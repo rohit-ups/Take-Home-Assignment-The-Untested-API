@@ -102,16 +102,12 @@ describe('getPaginated()', () => {
     taskService.create({ title: 'Task 5' });
   });
 
-  // BUG: offset is page * limit instead of (page - 1) * limit.
-  // page=1, limit=2 computes offset=2, skipping the first 2 items.
-  // This test asserts the current buggy behavior. After the fix,
-  // it should return ['Task 1', 'Task 2'].
-  it('page 1 returns wrong slice due to off-by-one bug', () => {
+  // Fixed: page 1 now correctly returns the first 2 items
+  it('page 1 returns the first page of results', () => {
     const page1 = taskService.getPaginated(1, 2);
-    // Buggy: returns items at index 2-3 instead of 0-1
     expect(page1).toHaveLength(2);
-    expect(page1[0].title).toBe('Task 3');
-    expect(page1[1].title).toBe('Task 4');
+    expect(page1[0].title).toBe('Task 1');
+    expect(page1[1].title).toBe('Task 2');
   });
 
   it('returns empty array for page beyond data range', () => {

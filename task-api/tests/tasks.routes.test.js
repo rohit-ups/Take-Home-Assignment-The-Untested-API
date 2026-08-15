@@ -148,15 +148,13 @@ describe('GET /tasks?page=&limit=', () => {
     await request(app).post('/tasks').send({ title: 'Task 5' });
   });
 
-  // BUG: offset is page * limit, so page=1 limit=2 returns items at index 2-3
-  // instead of 0-1
-  it('page 1 returns wrong items due to off-by-one bug', async () => {
+  // Fixed: page 1 now correctly returns the first 2 items
+  it('page 1 returns the correct first page', async () => {
     const res = await request(app).get('/tasks?page=1&limit=2');
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
-    // Buggy: returns Task 3 and Task 4 instead of Task 1 and Task 2
-    expect(res.body[0].title).toBe('Task 3');
+    expect(res.body[0].title).toBe('Task 1');
   });
 
   it('returns empty array for page beyond data', async () => {
