@@ -33,6 +33,7 @@ describe('create()', () => {
     expect(task.priority).toBe('medium');
     expect(task.description).toBe('');
     expect(task.dueDate).toBeNull();
+    expect(task.assignee).toBeNull();
     expect(task.completedAt).toBeNull();
   });
 });
@@ -211,6 +212,28 @@ describe('completeTask()', () => {
 
     // Buggy behavior: priority is reset to 'medium' instead of staying 'high'
     expect(completed.priority).toBe('medium');
+  });
+});
+
+describe('assignTask()', () => {
+  it('assigns an assignee to a task', () => {
+    const task = taskService.create({ title: 'Assign me' });
+    const assigned = taskService.assignTask(task.id, 'Alice');
+
+    expect(assigned.assignee).toBe('Alice');
+    expect(assigned.title).toBe('Assign me');
+  });
+
+  it('returns null for non-existent id', () => {
+    expect(taskService.assignTask('no-such-id', 'Alice')).toBeNull();
+  });
+
+  it('allows reassignment to a different user', () => {
+    const task = taskService.create({ title: 'Reassign me' });
+    taskService.assignTask(task.id, 'Alice');
+    const reassigned = taskService.assignTask(task.id, 'Bob');
+
+    expect(reassigned.assignee).toBe('Bob');
   });
 });
 

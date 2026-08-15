@@ -319,3 +319,83 @@ describe('GET /tasks/stats', () => {
     expect(res.body).toEqual({ todo: 0, in_progress: 0, done: 0, overdue: 0 });
   });
 });
+
+describe('PATCH /tasks/:id/assign', () => {
+  let taskId;
+
+  beforeEach(async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Assignable task' });
+    taskId = res.body.id;
+  });
+
+  it('assigns a user to a task and returns the updated task', async () => {
+    const res = await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Alice');
+    expect(res.body.title).toBe('Assignable task');
+    expect(res.body.id).toBe(taskId);
+  });
+
+  it('allows reassignment to a different user', async () => {
+    await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({ assignee: 'Alice' });
+
+    const res = await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({ assignee: 'Bob' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Bob');
+  });
+
+  it('returns 404 for non-existent task', async () => {
+    const res = await request(app)
+      .patch('/tasks/non-existent/assign')
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toMatch(/not found/i);
+  });
+
+  it('returns 400 when assignee is missing', async () => {
+    const res = await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/assignee/i);
+  });
+
+  it('returns 400 when assignee is empty string', async () => {
+    const res = await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({ assignee: '' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/assignee/i);
+  });
+
+  it('returns 400 when assignee is not a string', async () => {
+    const res = await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({ assignee: 123 });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/assignee/i);
+  });
+
+  it('does not change the task status when assigning', async () => {
+    const res = await request(app)
+      .patch(`/tasks/${taskId}/assign`)
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('todo');
+  });
+});
