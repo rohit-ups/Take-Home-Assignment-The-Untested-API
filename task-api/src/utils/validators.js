@@ -33,4 +33,18 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+// NEW FEATURE: validates the body of PATCH /tasks/:id/assign.
+// Design decision: `assignee` must be present and a non-empty (after
+// trimming) string, mirroring how `title` is validated elsewhere in this
+// file. Re-assigning an already-assigned task is allowed (see
+// assignTask() / the route) -- there's no business reason given in the
+// brief to block it, and blocking it would require extra state tracking
+// for little benefit.
+const validateAssignTask = (body) => {
+  if (!body.assignee || typeof body.assignee !== 'string' || body.assignee.trim() === '') {
+    return 'assignee is required and must be a non-empty string';
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };

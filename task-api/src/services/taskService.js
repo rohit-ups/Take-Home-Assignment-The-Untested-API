@@ -8,8 +8,16 @@ const findById = (id) => tasks.find((t) => t.id === id);
 
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
+// FIX (Bug #2): pages are 1-indexed everywhere else in this API (the route
+// layer defaults an unspecified page to 1, and callers naturally expect
+// page=1 to be the *first* page). The old `page * limit` offset skipped
+// the first `limit` items on page 1. Using `(page - 1) * limit` fixes
+// that, with `Math.max(page, 1)` as a guard against a caller passing
+// page=0 or a negative number, which would otherwise produce a negative
+// offset.
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const safePage = Math.max(page, 1);
+  const offset = (safePage - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -76,6 +84,21 @@ const completeTask = (id) => {
   return updated;
 };
 
+// NEW FEATURE: assigns a task to a user by name. Validation of the
+// `assignee` value itself lives in the validators layer (matching how
+// create/update do it) -- this function assumes it has already received
+// a valid, trimmed string.
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = { ...task, assignee };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +113,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
