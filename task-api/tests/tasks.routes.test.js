@@ -193,9 +193,7 @@ describe('Task Routes (Integration Tests)', () => {
       }
     });
 
-    // BUG DISCOVERY: HTTP layer pagination offset bug
-    // Route passes pageNum=1, limitNum=10 to service, which computes offset = 1 * 10 = 10, skipping Task 1..10
-    test.failing('returns page 1 containing the first 10 items (Task 1 to Task 10)', async () => {
+    it('returns page 1 containing the first 10 items (Task 1 to Task 10)', async () => {
       const res = await request(app)
         .get('/tasks?page=1&limit=10')
         .expect(200);

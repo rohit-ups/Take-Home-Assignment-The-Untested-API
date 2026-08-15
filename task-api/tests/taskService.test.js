@@ -151,16 +151,14 @@ describe('taskService (Unit Tests)', () => {
       }
     });
 
-    // BUG DISCOVERY: Pagination offset math bug
-    // offset is calculated as `page * limit`, which for page=1 yields offset=10 (skipping tasks 1-10)
-    test.failing('returns the first page (items 1 to 10) for page=1 and limit=10', () => {
+    it('returns the first page (items 1 to 10) for page=1 and limit=10', () => {
       const page1 = taskService.getPaginated(1, 10);
       expect(page1).toHaveLength(10);
       expect(page1[0].title).toBe('Task 1');
       expect(page1[9].title).toBe('Task 10');
     });
 
-    test.failing('returns the second page (items 11 to 20) for page=2 and limit=10 without gaps or overlaps', () => {
+    it('returns the second page (items 11 to 20) for page=2 and limit=10 without gaps or overlaps', () => {
       const page1 = taskService.getPaginated(1, 10);
       const page2 = taskService.getPaginated(2, 10);
 
@@ -174,11 +172,10 @@ describe('taskService (Unit Tests)', () => {
     });
 
     it('returns remaining items on the last partial page', () => {
-      // With current offset=page*limit: page 2 offset=20, items 21..25
-      const page2 = taskService.getPaginated(2, 10);
-      expect(page2).toHaveLength(5);
-      expect(page2[0].title).toBe('Task 21');
-      expect(page2[4].title).toBe('Task 25');
+      const page3 = taskService.getPaginated(3, 10);
+      expect(page3).toHaveLength(5);
+      expect(page3[0].title).toBe('Task 21');
+      expect(page3[4].title).toBe('Task 25');
     });
 
     it('returns empty array when page is beyond the total items', () => {
@@ -186,9 +183,18 @@ describe('taskService (Unit Tests)', () => {
       expect(result).toEqual([]);
     });
 
+    it('clamps non-positive page numbers to page 1', () => {
+      const page0 = taskService.getPaginated(0, 10);
+      expect(page0).toHaveLength(10);
+      expect(page0[0].title).toBe('Task 1');
+
+      const pageNeg = taskService.getPaginated(-2, 10);
+      expect(pageNeg).toHaveLength(10);
+      expect(pageNeg[0].title).toBe('Task 1');
+    });
+
     it('returns all items if limit is larger than total count', () => {
-      // With page 0 in current implementation: offset = 0 * 50 = 0
-      const result = taskService.getPaginated(0, 50);
+      const result = taskService.getPaginated(1, 50);
       expect(result).toHaveLength(25);
     });
   });

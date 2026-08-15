@@ -29,6 +29,9 @@ const getPaginated = (page, limit) => {
 
 **Severity/impact:** **Critical / High**. In production, all API clients requesting the first page of tasks will silently miss the most recent / initial `limit` tasks. If a user has fewer tasks than `limit` (e.g., 5 tasks total), `GET /tasks?page=1&limit=10` returns an empty array `[]`, making it appear that no tasks exist.
 
+**Fix Notes:**
+Fixed in `src/services/taskService.js` by converting the 1-based page number to a 0-based offset with `const pageNum = Math.max(1, page); const offset = (pageNum - 1) * limit;`. Using `Math.max(1, page)` defensively guards against non-positive integers (e.g. `0` or negative numbers), ensuring deterministic pagination that always maps to valid slice offsets. All unit and route integration pagination tests now pass cleanly with 100% boundary accuracy without impacting any other endpoints.
+
 ---
 
 ## Bug 2: `completeTask` silently mutates and resets task `priority` to `'medium'`
