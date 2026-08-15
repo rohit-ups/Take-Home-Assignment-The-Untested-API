@@ -37,6 +37,7 @@ describe('taskService (Unit Tests)', () => {
       expect(task.priority).toBe('medium');
       expect(task.dueDate).toBeNull();
       expect(task.completedAt).toBeNull();
+      expect(task.assignee).toBeNull();
       expect(task.id).toBeDefined();
       expect(task.createdAt).toBeDefined();
     });
@@ -68,6 +69,7 @@ describe('taskService (Unit Tests)', () => {
         'dueDate',
         'completedAt',
         'createdAt',
+        'assignee',
       ]);
     });
   });
