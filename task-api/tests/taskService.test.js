@@ -413,3 +413,59 @@ describe('BUG-7 regression – validators.js empty-string bypass', () => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// assignTask  (Part C — new feature)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('assignTask', () => {
+  test('newly created task has assignee: null', () => {
+    const task = makeTask();
+    // The create() function must initialise assignee to null.
+    expect(task.assignee).toBeNull();
+  });
+
+  test('happy path – assigns a name and returns the updated task', () => {
+    const task = makeTask();
+    const result = svc.assignTask(task.id, 'Alice');
+
+    expect(result).not.toBeNull();
+    expect(result.assignee).toBe('Alice');
+    // All other fields must be preserved
+    expect(result.id).toBe(task.id);
+    expect(result.title).toBe(task.title);
+    expect(result.status).toBe('todo');
+  });
+
+  test('persists the assignment in the store', () => {
+    const task = makeTask();
+    svc.assignTask(task.id, 'Bob');
+    expect(svc.findById(task.id).assignee).toBe('Bob');
+  });
+
+  test('re-assignment overwrites the previous assignee', () => {
+    const task = makeTask();
+    svc.assignTask(task.id, 'Alice');
+    const result = svc.assignTask(task.id, 'Bob');
+    expect(result.assignee).toBe('Bob');
+    expect(svc.findById(task.id).assignee).toBe('Bob');
+  });
+
+  test('returns null for an unknown task id', () => {
+    expect(svc.assignTask('ghost-id', 'Alice')).toBeNull();
+  });
+
+  test('boundary – assigning does not change status', () => {
+    const task = makeTask({ status: 'in_progress' });
+    const result = svc.assignTask(task.id, 'Carol');
+    expect(result.status).toBe('in_progress');
+  });
+
+  test('boundary – can assign a completed task (for audit purposes)', () => {
+    const task = makeTask();
+    svc.completeTask(task.id);
+    const result = svc.assignTask(task.id, 'Dave');
+    expect(result.assignee).toBe('Dave');
+    expect(result.status).toBe('done'); // status unchanged
+  });
+});
+

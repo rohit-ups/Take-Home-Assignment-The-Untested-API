@@ -520,3 +520,154 @@ describe('BUG-7 regression – empty-string status/priority rejected by API', ()
   });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /tasks/:id/assign  (Part C — new feature)
+//
+// Design decisions:
+//   - assignee is required; missing, empty, or non-string → 400
+//   - re-assigning (task already has an assignee) is allowed (200, overwrite)
+//   - completing a task does not clear its assignee
+//   - new tasks initialise with assignee: null in the response body
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('PATCH /tasks/:id/assign', () => {
+  test('happy path – assigns a name and returns 200 with updated task', async () => {
+    const task = await createTask({ title: 'Needs owner' });
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Alice');
+    // All original fields must be preserved
+    expect(res.body.id).toBe(task.id);
+    expect(res.body.title).toBe('Needs owner');
+    expect(res.body.status).toBe('todo');
+  });
+
+  test('returns 404 for an unknown task id', async () => {
+    const res = await request(app)
+      .patch('/tasks/ghost-id/assign')
+      .send({ assignee: 'Alice' });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  /**
+   * ⚠️  FM-1  The body must contain an "assignee" field.
+   * Omitting it entirely should return 400, not silently store undefined/null.
+   */
+  test('⚠️ FM-1 – missing assignee field returns 400', async () => {
+    const task = await createTask();
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  /**
+   * ⚠️  FM-2  An empty string is not a valid assignee.
+   * Should return 400, not store "" on the task.
+   */
+  test('⚠️ FM-2 – empty string assignee returns 400', async () => {
+    const task = await createTask();
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: '' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  /**
+   * ⚠️  FM-3  assignee must be a string.
+   * Sending a number should return 400, not store 42 on the task.
+   */
+  test('⚠️ FM-3 – non-string assignee (number) returns 400', async () => {
+    const task = await createTask();
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 42 });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('boundary – whitespace-only assignee returns 400', async () => {
+    const task = await createTask();
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: '   ' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('error');
+  });
+
+  test('boundary – re-assigning overwrites the previous assignee', async () => {
+    const task = await createTask();
+
+    await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Alice' });
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Bob' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Bob');
+  });
+
+  test('boundary – newly created task has assignee: null before assignment', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Fresh task' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.assignee).toBeNull();
+  });
+
+  test('boundary – assigning to a completed task is allowed', async () => {
+    const task = await createTask();
+    await request(app).patch(`/tasks/${task.id}/complete`);
+
+    const res = await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Eve' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Eve');
+    expect(res.body.status).toBe('done');
+  });
+
+  test('assigned task shows assignee in GET /tasks', async () => {
+    const task = await createTask();
+    await request(app)
+      .patch(`/tasks/${task.id}/assign`)
+      .send({ assignee: 'Frank' });
+
+    const list = await request(app).get('/tasks');
+    const found = list.body.find((t) => t.id === task.id);
+    expect(found.assignee).toBe('Frank');
+  });
+
+  test('stats endpoint still works correctly after assignment', async () => {
+    await createTask({ status: 'todo' });
+    const tasks = await request(app).get('/tasks');
+    await request(app)
+      .patch(`/tasks/${tasks.body[0].id}/assign`)
+      .send({ assignee: 'Grace' });
+
+    const stats = await request(app).get('/tasks/stats');
+    expect(stats.status).toBe(200);
+    expect(stats.body.todo).toBe(1);
+  });
+});
