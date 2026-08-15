@@ -255,6 +255,19 @@ describe('DELETE /tasks/:id', () => {
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/not found/i);
   });
+
+  it('returns 404 when deleting a task twice', async () => {
+    const created = await request(app)
+      .post('/tasks')
+      .send({ title: 'To delete twice' });
+
+    const id = created.body.id;
+    const res1 = await request(app).delete(`/tasks/${id}`);
+    expect(res1.status).toBe(204);
+
+    const res2 = await request(app).delete(`/tasks/${id}`);
+    expect(res2.status).toBe(404);
+  });
 });
 
 describe('PATCH /tasks/:id/complete', () => {
@@ -317,6 +330,23 @@ describe('GET /tasks/stats', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ todo: 0, in_progress: 0, done: 0, overdue: 0 });
+  });
+
+  it('returns stats reflecting a specific mix of statuses including overdue in-progress task', async () => {
+    await request(app).post('/tasks').send({ title: 'Todo 1', status: 'todo' });
+    await request(app).post('/tasks').send({ title: 'Todo 2', status: 'todo' });
+    await request(app).post('/tasks').send({ title: 'Done 1', status: 'done' });
+    await request(app).post('/tasks').send({ title: 'Overdue IP', status: 'in_progress', dueDate: '2020-01-01T00:00:00.000Z' });
+
+    const res = await request(app).get('/tasks/stats');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      todo: 2,
+      in_progress: 1,
+      done: 1,
+      overdue: 1,
+    });
   });
 });
 
