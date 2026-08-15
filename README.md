@@ -111,3 +111,31 @@ See [ASSIGNMENT.md](./ASSIGNMENT.md) for full submission requirements. At minimu
 - **Bug report** — what you found, where in the code, and why it's a bug (not just symptoms)
 - **At least one fix** — with a note on your approach
 - **`PATCH /tasks/:id/assign` implementation** — plus a short explanation of any design decisions (validation, edge cases, etc.)
+
+
+
+
+## Implementation Notes
+
+### Bugs Found and Fixed
+
+During testing, I identified and fixed two bugs:
+
+1. **Pagination offset bug** — pagination was skipping the first page because the offset used `page * limit` instead of `(page - 1) * limit`.
+
+2. **Task priority bug** — completing a task was incorrectly changing its priority to `medium`. The fix preserves the task's existing priority.
+
+More details are documented in `BUGS.md`.
+
+### Task Assignment Feature
+
+Implemented:
+
+`PATCH /tasks/:id/assign`
+
+Request body:
+
+```json
+{
+  "assignee": "Kashish"
+}
