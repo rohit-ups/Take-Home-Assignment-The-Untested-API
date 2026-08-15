@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
+
 const taskService = require('../services/taskService');
-const { validateCreateTask, validateUpdateTask } = require('../utils/validators');
+
+const {
+  validateCreateTask,
+  validateUpdateTask,
+  validateAssignTask
+} = require('../utils/validators');
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
@@ -19,6 +25,7 @@ router.get('/', (req, res) => {
   if (page !== undefined || limit !== undefined) {
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
+
     const tasks = taskService.getPaginated(pageNum, limitNum);
     return res.json(tasks);
   }
@@ -29,6 +36,7 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
   const error = validateCreateTask(req.body);
+
   if (error) {
     return res.status(400).json({ error });
   }
@@ -39,11 +47,13 @@ router.post('/', (req, res) => {
 
 router.put('/:id', (req, res) => {
   const error = validateUpdateTask(req.body);
+
   if (error) {
     return res.status(400).json({ error });
   }
 
   const task = taskService.update(req.params.id, req.body);
+
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }
@@ -53,6 +63,7 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const deleted = taskService.remove(req.params.id);
+
   if (!deleted) {
     return res.status(404).json({ error: 'Task not found' });
   }
@@ -60,8 +71,32 @@ router.delete('/:id', (req, res) => {
   res.status(204).send();
 });
 
+// PATCH /tasks/:id/complete
 router.patch('/:id/complete', (req, res) => {
   const task = taskService.completeTask(req.params.id);
+
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
+});
+
+// PATCH /tasks/:id/assign
+router.patch('/:id/assign', (req, res) => {
+  const error = validateAssignTask(req.body);
+
+  if (error) {
+    return res.status(400).json({ error });
+  }
+
+  const assignee = req.body.assignee.trim();
+
+  const task = taskService.assignTask(
+    req.params.id,
+    assignee
+  );
+
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }
