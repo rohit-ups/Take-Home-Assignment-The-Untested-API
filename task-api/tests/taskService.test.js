@@ -209,6 +209,8 @@ describe('taskService (Unit Tests)', () => {
       taskService.create({ title: 'T2', status: 'todo' });
       taskService.create({ title: 'T3', status: 'in_progress' });
       taskService.create({ title: 'T4', status: 'done' });
+      // Task with non-standard status should not increment standard count buckets
+      taskService.create({ title: 'T5', status: 'custom_status' });
 
       const stats = taskService.getStats();
       expect(stats).toEqual({
