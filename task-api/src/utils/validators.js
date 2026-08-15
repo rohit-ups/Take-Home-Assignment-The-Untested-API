@@ -1,6 +1,11 @@
 const VALID_STATUSES = ['todo', 'in_progress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
+const validateStatus = (status) =>
+  VALID_STATUSES.includes(status)
+    ? null
+    : `status must be one of: ${VALID_STATUSES.join(', ')}`;
+
 const validateCreateTask = (body) => {
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
     return 'title is required and must be a non-empty string';
@@ -33,4 +38,4 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+module.exports = { validateCreateTask, validateUpdateTask, validateStatus };
