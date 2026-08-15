@@ -9,7 +9,8 @@ const findById = (id) => tasks.find((t) => t.id === id);
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const safePage = page > 0 ? page : 1;
+  const offset = (safePage - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -66,7 +67,6 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };
@@ -79,16 +79,27 @@ const completeTask = (id) => {
 const _reset = () => {
   tasks = [];
 };
+const assignTask = (id, assignee) => {
+  const task = tasks.find(task => task.id === id);
 
+  if (!task) {
+    return null;
+  }
+
+  task.assignee = assignee;
+
+  return task;
+};
 module.exports = {
+  create,
   getAll,
-  findById,
   getByStatus,
   getPaginated,
   getStats,
-  create,
+  findById,
   update,
   remove,
   completeTask,
-  _reset,
+  assignTask,
+  _reset
 };
