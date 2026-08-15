@@ -137,4 +137,25 @@ describe('Task API routes', () => {
 
     expect(res.status).toBe(400);
   });
+  it('rejects creating a task with an invalid status', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Bad status', status: 'not-a-real-status' });
+
+    expect(res.status).toBe(400);
+  });
+  it('rejects creating a task with an invalid priority', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Bad priority', priority: 'urgent' });
+
+    expect(res.status).toBe(400);
+  });
+  it('rejects creating a task with an invalid dueDate', async () => {
+    const res = await request(app)
+      .post('/tasks')
+      .send({ title: 'Bad date', dueDate: 'not-a-real-date' });
+
+    expect(res.status).toBe(400);
+  });
 });
