@@ -1,5 +1,6 @@
 # Submission Notes
 
+![coverage screenshot](image.png)
 ## Coverage summary
 
 ```
