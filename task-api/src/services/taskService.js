@@ -76,6 +76,26 @@ const completeTask = (id) => {
   return updated;
 };
 
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+
+  if (!task) return null;
+
+  if (task.assignee) {
+    return { error: 'Task is already assigned' };
+  }
+
+  const updated = {
+    ...task,
+    assignee: assignee.trim(),
+  };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +110,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };

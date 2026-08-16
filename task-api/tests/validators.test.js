@@ -1,6 +1,6 @@
 const {
     validateCreateTask,
-    validateUpdateTask
+    validateUpdateTask,validateAssignTask
   } = require("../src/utils/validators");
 
 
@@ -65,5 +65,44 @@ const {
       });
   
       expect(error).toContain("status must be one of");
+    });
+  });
+
+  //unit testing for assignee task
+  describe("validateAssignTask", () => {
+    test("should accept a valid assignee", () => {
+      const error = validateAssignTask({
+        assignee: "Yash"
+      });
+  
+      expect(error).toBeNull();
+    });
+  
+    test("should reject a missing assignee", () => {
+      const error = validateAssignTask({});
+  
+      expect(error).toBe(
+        "assignee is required and must be a non-empty string"
+      );
+    });
+  
+    test("should reject an empty assignee", () => {
+      const error = validateAssignTask({
+        assignee: "   "
+      });
+  
+      expect(error).toBe(
+        "assignee is required and must be a non-empty string"
+      );
+    });
+  
+    test("should reject a non-string assignee", () => {
+      const error = validateAssignTask({
+        assignee: 123
+      });
+  
+      expect(error).toBe(
+        "assignee is required and must be a non-empty string"
+      );
     });
   });

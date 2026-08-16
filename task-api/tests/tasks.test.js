@@ -335,3 +335,123 @@ describe("GET /tasks", () => {
       expect(response.body.overdue).toBe(1);
     });
   });
+
+  describe("PATCH /tasks/:id/assign", () => {
+    test("should assign a task to a user", async () => {
+      const createResponse = await request(app)
+        .post("/tasks")
+        .send({
+          title: "Task to assign"
+        });
+  
+      const taskId = createResponse.body.id;
+  
+      const response = await request(app)
+        .patch(`/tasks/${taskId}/assign`)
+        .send({
+          assignee: "Yash"
+        });
+  
+      expect(response.status).toBe(200);
+      expect(response.body.id).toBe(taskId);
+      expect(response.body.assignee).toBe("Yash");
+      expect(response.body.title).toBe("Task to assign");
+    });
+  
+    test("should return 404 when the task does not exist", async () => {
+      const response = await request(app)
+        .patch("/tasks/non-existent-id/assign")
+        .send({
+          assignee: "Yash"
+        });
+  
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe("Task not found");
+    });
+  
+    test("should reject a missing assignee", async () => {
+      const createResponse = await request(app)
+        .post("/tasks")
+        .send({
+          title: "Task to assign"
+        });
+  
+      const taskId = createResponse.body.id;
+  
+      const response = await request(app)
+        .patch(`/tasks/${taskId}/assign`)
+        .send({});
+  
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(
+        "assignee is required and must be a non-empty string"
+      );
+    });
+  
+    test("should reject an empty assignee", async () => {
+      const createResponse = await request(app)
+        .post("/tasks")
+        .send({
+          title: "Task to assign"
+        });
+  
+      const taskId = createResponse.body.id;
+  
+      const response = await request(app)
+        .patch(`/tasks/${taskId}/assign`)
+        .send({
+          assignee: "   "
+        });
+  
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(
+        "assignee is required and must be a non-empty string"
+      );
+    });
+  
+    test("should reject a non-string assignee", async () => {
+      const createResponse = await request(app)
+        .post("/tasks")
+        .send({
+          title: "Task to assign"
+        });
+  
+      const taskId = createResponse.body.id;
+  
+      const response = await request(app)
+        .patch(`/tasks/${taskId}/assign`)
+        .send({
+          assignee: 123
+        });
+  
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(
+        "assignee is required and must be a non-empty string"
+      );
+    });
+  
+    test("should reject assigning an already assigned task", async () => {
+      const createResponse = await request(app)
+        .post("/tasks")
+        .send({
+          title: "Already assigned task"
+        });
+  
+      const taskId = createResponse.body.id;
+  
+      await request(app)
+        .patch(`/tasks/${taskId}/assign`)
+        .send({
+          assignee: "Yash"
+        });
+  
+      const response = await request(app)
+        .patch(`/tasks/${taskId}/assign`)
+        .send({
+          assignee: "Rahul"
+        });
+  
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Task is already assigned");
+    });
+  });
