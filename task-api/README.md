@@ -1,11 +1,21 @@
-Yes. Keep **your exact content and wording**, and just fix the Markdown structure. Use this:
+# Task Manager API — Take-Home Assignment
 
-````markdown
+A RESTful Task Manager API built with Node.js and Express. The objective of this assignment was to understand an unfamiliar codebase, build a test suite, identify bugs through testing, fix one bug, and implement a new feature.
+
+## Tech Stack
+
+- Node.js
+- Express.js
+- Jest
+- Supertest
+- In-memory data store
+
+
 # Task Manager API
 
 ## Project Structure
 
-
+```text
 task-api/
 ├── src/
 │   ├── app.js
@@ -23,7 +33,7 @@ task-api/
 ├── jest.config.js
 ├── package.json
 └── README.md
-
+````
 
 ## Testing Approach
 
