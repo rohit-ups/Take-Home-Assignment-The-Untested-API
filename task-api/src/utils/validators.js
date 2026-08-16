@@ -33,4 +33,14 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+//new feature 
+// valdator for assignTask
+const validateAssignTask = (assignee ) => {
+    if (typeof assignee !== "string" || assignee.trim() === "") {
+        return "assignee is required and must be a non-empty string"
+    }
+
+    return null
+}
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask};
