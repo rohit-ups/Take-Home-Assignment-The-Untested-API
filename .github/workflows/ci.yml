@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, aryan-singh-submission]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: task-api
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: task-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run coverage
+
+      - name: Enforce coverage floor
+        run: |
+          node -e "
+            const s = require('./coverage/coverage-summary.json').total;
+            const floor = 80;
+            const metrics = ['lines', 'statements', 'functions', 'branches'];
+            const failed = metrics.filter((m) => s[m].pct < floor);
+            if (failed.length) {
+              console.error('Coverage below ' + floor + '% for: ' + failed.join(', '));
+              process.exit(1);
+            }
+            console.log('Coverage OK — all metrics >= ' + floor + '%');
+          "
