@@ -1,0 +1,3 @@
+# Design Notes
+
+`PATCH /tasks/:id/assign` permits reassignment because assigning a different owner is a normal update and the existing API does not use one-time-set guards. Validation is kept in `validators.js` and returns the same string-or-`null` result shape as the create and update validators, so the route can follow the established 400 response pattern. The service returns `null` for a missing task and otherwise writes a spread copy back into the in-memory array, matching `completeTask`. Assignee values are trimmed before storage, which avoids duplicate-looking names caused by accidental outer whitespace while still rejecting empty or whitespace-only input.
