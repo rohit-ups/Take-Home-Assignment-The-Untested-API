@@ -9,8 +9,8 @@ const findById = (id) => tasks.find((t) => t.id === id);
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const offset = (page - 1) * limit;
+  return tasks.slice(offset, offset + limit);//FIXED THE PAGINATION CALCULATION ERROR(FOR EXTRA INFO SEE BUGS.MD)
 };
 
 const getStats = () => {
@@ -76,6 +76,26 @@ const completeTask = (id) => {
   return updated;
 };
 
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+
+  if (!task) return null;
+
+  if (task.assignee) {
+    return { error: 'Task is already assigned' };
+  }
+
+  const updated = {
+    ...task,
+    assignee: assignee.trim(),
+  };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +110,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
