@@ -9,8 +9,11 @@ const findById = (id) => tasks.find((t) => t.id === id);
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  // Pages are 1-based at the route layer, so page 1 must start at the first task.
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Number(limit) || 10);
+  const offset = (safePage - 1) * safeLimit;
+  return tasks.slice(offset, offset + safeLimit);
 };
 
 const getStats = () => {
@@ -60,6 +63,15 @@ const remove = (id) => {
   return true;
 };
 
+const assign = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const updated = { ...tasks[index], assignee };
+  tasks[index] = updated;
+  return updated;
+};
+
 const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
@@ -90,5 +102,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assign,
   _reset,
 };
