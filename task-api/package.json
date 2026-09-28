@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "test": "jest",
-    "coverage": "jest --coverage"
+    "coverage": "jest --coverage",
+    "start:submission": "node submission/server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
