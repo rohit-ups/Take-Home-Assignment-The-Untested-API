@@ -5,18 +5,22 @@ const { validateCreateTask, validateUpdateTask } = require('../utils/validators'
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
-  res.json(stats);
+  // 1. missing return
+  return res.json(stats);
 });
 
 router.get('/', (req, res) => {
   const { status, page, limit } = req.query;
 
   if (status) {
+    // 1. no validation on status value here, invalid status just returns empty array
     const tasks = taskService.getByStatus(status);
     return res.json(tasks);
   }
 
   if (page !== undefined || limit !== undefined) {
+    // 1. parseInt(page) || 1 defaults to 1 but service math treats page as 0-indexed
+    // 2. this is the root of the pagination bug, page 1 skips first results
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     const tasks = taskService.getPaginated(pageNum, limitNum);
@@ -34,9 +38,15 @@ router.post('/', (req, res) => {
   }
 
   const task = taskService.create(req.body);
-  res.status(201).json(task);
+
+  // 1. missing return  
+  return res.status(201).json(task);
 });
 
+//  1. maybe due to missing url endocing hook
+//  2. maybe not delete method is working
+//  3. damn this is a put method but i was using it as a post
+//  4. this is working
 router.put('/:id', (req, res) => {
   const error = validateUpdateTask(req.body);
   if (error) {
@@ -66,7 +76,26 @@ router.patch('/:id/complete', (req, res) => {
     return res.status(404).json({ error: 'Task not found' });
   }
 
+  // 1. no try catch here, if service throws this will crash
   res.json(task);
 });
 
+// 1. new feature - assign a task to someone
+router.patch('/:id/assign', (req, res) => {
+  const { assignee } = req.body;
+
+  // 1. assignee must be a non empty string
+  if (!assignee || typeof assignee !== 'string' || assignee.trim() === '') {
+    return res.status(400).json({ error: 'assignee is required and must be a non-empty string' });
+  }
+
+  const task = taskService.assignTask(req.params.id, assignee.trim());
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
+});
+
+// 1. GET /:id is missing, findById exists in service but no route uses it
 module.exports = router;

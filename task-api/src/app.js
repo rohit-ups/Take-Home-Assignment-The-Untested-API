@@ -3,6 +3,8 @@ const taskRoutes = require('./routes/tasks');
 
 const app = express();
 
+// 1. i think url encoded is missing: we cant get params from url
+// 2. actually req.query works without it, only needed for form submissions
 app.use(express.json());
 app.use('/tasks', taskRoutes);
 

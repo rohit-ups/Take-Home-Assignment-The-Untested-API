@@ -5,9 +5,12 @@ const validateCreateTask = (body) => {
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
     return 'title is required and must be a non-empty string';
   }
+  // 1. no max length check on title, u can send a huge string
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return `status must be one of: ${VALID_STATUSES.join(', ')}`;
   }
+  // 1. empty string is falsy so this check gets skipped for status: ""
+  // 2. same issue on priority and dueDate below, empty string slips through
   if (body.priority && !VALID_PRIORITIES.includes(body.priority)) {
     return `priority must be one of: ${VALID_PRIORITIES.join(', ')}`;
   }

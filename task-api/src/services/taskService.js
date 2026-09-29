@@ -6,8 +6,14 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// 1. this is using .includes() which is substring match not exact
+// 2. confirmed, "tod" would match "todo" tasks
+// 3. fixed - changed to === for exact match
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
+// 1. page * limit is wrong for 1-indexed pages
+// 2. page=1 gives offset=10 so it skips the first results
+//    should be (page-1) * limit
 const getPaginated = (page, limit) => {
   const offset = page * limit;
   return tasks.slice(offset, offset + limit);
@@ -64,6 +70,8 @@ const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
 
+  // 1. why is priority hardcoded to medium here
+  // 2. this resets any priority to medium when completing, high becomes medium too
   const updated = {
     ...task,
     priority: 'medium',
@@ -76,6 +84,18 @@ const completeTask = (id) => {
   return updated;
 };
 
+// 1. new feature - assign a task to someone
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = { ...task, assignee };
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
+// 1. this is only used internally for tests, no route exposes it
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +110,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
