@@ -73,7 +73,7 @@ describe('getPaginated', () => {
     expect(taskService.getPaginated(99, 10)).toEqual([]);
   });
 
-  it.failing('returns the first page of tasks for page 1', () => {
+  it('returns the first page of tasks for page 1', () => {
     seedTasks(25);
 
     const page = taskService.getPaginated(1, 10);
@@ -83,7 +83,7 @@ describe('getPaginated', () => {
     expect(page[9].title).toBe('task 10');
   });
 
-  it.failing('returns the second page with no gaps or overlaps', () => {
+  it('returns the second page with no gaps or overlaps', () => {
     seedTasks(25);
 
     const page = taskService.getPaginated(2, 10);
@@ -93,7 +93,7 @@ describe('getPaginated', () => {
     expect(page[9].title).toBe('task 20');
   });
 
-  it.failing('returns the remainder on the last, partial page', () => {
+  it('returns the remainder on the last, partial page', () => {
     seedTasks(25);
 
     const page = taskService.getPaginated(3, 10);
@@ -102,10 +102,18 @@ describe('getPaginated', () => {
     expect(page[0].title).toBe('task 21');
   });
 
-  it.failing('returns everything when the limit is larger than the store', () => {
+  it('returns everything when the limit is larger than the store', () => {
     seedTasks(5);
 
     expect(taskService.getPaginated(1, 100)).toHaveLength(5);
+  });
+
+  it('treats a page or limit below 1 as 1', () => {
+    seedTasks(15);
+
+    expect(taskService.getPaginated(0, 10)[0].title).toBe('task 1');
+    expect(taskService.getPaginated(-1, 10)[0].title).toBe('task 1');
+    expect(taskService.getPaginated(1, -5)).toHaveLength(1);
   });
 });
 

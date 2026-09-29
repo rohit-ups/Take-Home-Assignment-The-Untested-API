@@ -97,7 +97,7 @@ describe('GET /tasks?page=&limit=', () => {
     expect(res.body).toEqual([]);
   });
 
-  it.failing('returns the first 10 tasks on page 1', async () => {
+  it('returns the first 10 tasks on page 1', async () => {
     seedTasks(15);
 
     const res = await request(app).get('/tasks').query({ page: 1, limit: 10 }).expect(200);
@@ -107,7 +107,7 @@ describe('GET /tasks?page=&limit=', () => {
     expect(res.body[9].title).toBe('task 10');
   });
 
-  it.failing('returns the next batch of tasks on page 2', async () => {
+  it('returns the next batch of tasks on page 2', async () => {
     seedTasks(25);
 
     const res = await request(app).get('/tasks').query({ page: 2, limit: 10 }).expect(200);
@@ -117,7 +117,7 @@ describe('GET /tasks?page=&limit=', () => {
     expect(res.body[9].title).toBe('task 20');
   });
 
-  it.failing('falls back to page 1 and limit 10 for non-numeric values', async () => {
+  it('falls back to page 1 and limit 10 for non-numeric values', async () => {
     seedTasks(15);
 
     const res = await request(app).get('/tasks').query({ page: 'abc', limit: 'xyz' }).expect(200);

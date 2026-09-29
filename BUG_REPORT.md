@@ -25,10 +25,11 @@ page 1 returns an empty array.
 
 **How I found it:** seeded 15 tasks and paged through them —
 `getPaginated > returns the first page of tasks for page 1` and
-`GET /tasks?page=&limit= > returns the first 10 tasks on page 1` both fail (they
-are marked `it.failing` for now).
+`GET /tasks?page=&limit= > returns the first 10 tasks on page 1` both failed.
+This is the one I picked to fix; those two tests (and the ones for page 2 and
+the partial page) are now normal passing tests.
 
-**Fix:**
+**Fix (applied):**
 
 ```js
 const getPaginated = (page, limit) => {

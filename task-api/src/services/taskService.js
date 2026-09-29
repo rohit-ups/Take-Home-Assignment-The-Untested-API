@@ -9,8 +9,10 @@ const findById = (id) => tasks.find((t) => t.id === id);
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, limit);
+  const offset = (safePage - 1) * safeLimit;
+  return tasks.slice(offset, offset + safeLimit);
 };
 
 const getStats = () => {
