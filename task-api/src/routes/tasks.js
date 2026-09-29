@@ -69,4 +69,20 @@ router.patch('/:id/complete', (req, res) => {
   res.json(task);
 });
 
+// added a new api for adding a assignee to a task with proper validation and error handling 
+router.patch('/:id/assign', (req, res) => {
+  const { assignee } = req.body;
+
+  if (!assignee) {
+    return res.status(400).json({ error: 'Assignee is required' });
+  }
+
+  const task = taskService.assignTask(req.params.id, assignee);
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
+});
+
 module.exports = router;
