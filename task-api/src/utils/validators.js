@@ -33,4 +33,18 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+const validateAssignTask = (body) => {
+  if (!body || typeof body !== "object") {
+    return "request body must be an object";
+  }
+  if (
+    !body.assignee ||
+    typeof body.assignee !== "string" ||
+    body.assignee.trim() === ""
+  ) {
+    return "assignee is required and must be a non-empty string";
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };

@@ -90,4 +90,33 @@ describe("Task API Integration Tests", () => {
       expect(res.body).toHaveProperty("overdue");
     });
   });
+
+  describe("PATCH /tasks/:id/assign", () => {
+    test("assigns task successfully", async () => {
+      const task = taskService.create({ title: "Assignee Test" });
+      const res = await request(app)
+        .patch(`/tasks/${task.id}/assign`)
+        .send({ assignee: "Bob Smith" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.assignee).toBe("Bob Smith");
+    });
+
+    test("returns 400 for empty or whitespace assignee", async () => {
+      const task = taskService.create({ title: "Assignee Test" });
+      const res = await request(app)
+        .patch(`/tasks/${task.id}/assign`)
+        .send({ assignee: "   " });
+
+      expect(res.status).toBe(400);
+    });
+
+    test("returns 404 for non-existent task", async () => {
+      const res = await request(app)
+        .patch("/tasks/non-existent-id/assign")
+        .send({ assignee: "Bob" });
+
+      expect(res.status).toBe(404);
+    });
+  });
 });
