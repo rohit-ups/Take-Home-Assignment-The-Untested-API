@@ -17,6 +17,12 @@ describe('validators utility', () => {
       expect(result).toBeNull();
     });
 
+    test('returns error when payload is null or non-object', () => {
+      expect(validateCreateTask(null)).toBe('request body must be an object');
+      expect(validateCreateTask(undefined)).toBe('request body must be an object');
+      expect(validateCreateTask('string')).toBe('request body must be an object');
+    });
+
     test('returns error when title is missing', () => {
       const result = validateCreateTask({});
       expect(result).toBe('title is required and must be a non-empty string');

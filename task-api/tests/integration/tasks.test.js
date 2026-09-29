@@ -54,14 +54,30 @@ describe('Task API Integration Tests (/tasks)', () => {
       expect(response.body[0].title).toBe('Task 1');
     });
 
-    test('exposes BUG-02 pagination flaw where page=1 skips items', async () => {
+    test('supports 1-based pagination where page=1 returns first items (BUG-02 fixed)', async () => {
       taskService.create({ title: 'Task 1' });
+      taskService.create({ title: 'Task 2' });
 
       const response = await request(app).get('/tasks?page=1&limit=10');
 
       expect(response.status).toBe(200);
-      // Demonstrates BUG-02: returns empty array because page=1 calculates offset=10
-      expect(response.body).toEqual([]);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0].title).toBe('Task 1');
+    });
+
+    test('supports combined status filtering and 1-based pagination', async () => {
+      taskService.create({ title: 'Todo 1', status: 'todo' });
+      taskService.create({ title: 'Todo 2', status: 'todo' });
+      taskService.create({ title: 'Todo 3', status: 'todo' });
+      taskService.create({ title: 'Done 1', status: 'done' });
+
+      const response = await request(app).get('/tasks?status=todo&page=1&limit=2');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0].title).toBe('Todo 1');
+      expect(response.body[1].title).toBe('Todo 2');
+      expect(response.body.every((t) => t.status === 'todo')).toBe(true);
     });
   });
 
@@ -80,6 +96,14 @@ describe('Task API Integration Tests (/tasks)', () => {
       expect(response.body.title).toBe('New Integration Task');
       expect(response.body.priority).toBe('high');
       expect(response.body.status).toBe('todo');
+    });
+
+    test('returns 400 Bad Request when title is invalid type or non-string', async () => {
+      const response = await request(app).post('/tasks').send({ title: 12345 });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toContain('title is required and must be a non-empty string');
     });
 
     test('returns 400 Bad Request when title is missing', async () => {
@@ -132,6 +156,26 @@ describe('Task API Integration Tests (/tasks)', () => {
       expect(response.status).toBe(200);
       expect(response.body.title).toBe('Updated Title');
       expect(response.body.status).toBe('in_progress');
+    });
+
+    test('ignores attempts to overwrite protected metadata (id, createdAt, completedAt)', async () => {
+      const created = taskService.create({ title: 'Meta Protection' });
+      const originalCreatedAt = created.createdAt;
+
+      const response = await request(app)
+        .put(`/tasks/${created.id}`)
+        .send({
+          id: 'hacked-id',
+          createdAt: '1999-01-01T00:00:00.000Z',
+          completedAt: '1999-01-01T00:00:00.000Z',
+          title: 'Title Updated via PUT',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.id).toBe(created.id);
+      expect(response.body.createdAt).toBe(originalCreatedAt);
+      expect(response.body.completedAt).toBeNull();
+      expect(response.body.title).toBe('Title Updated via PUT');
     });
 
     test('returns 404 Not Found for non-existent task id', async () => {

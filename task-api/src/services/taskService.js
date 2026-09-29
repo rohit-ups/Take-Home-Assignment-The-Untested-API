@@ -2,14 +2,18 @@ const { v4: uuidv4 } = require('uuid');
 
 let tasks = [];
 
-const getAll = () => [...tasks];
+const getAll = () => tasks.map((t) => ({ ...t }));
 
-const findById = (id) => tasks.find((t) => t.id === id);
+const findById = (id) => {
+  const task = tasks.find((t) => t.id === id);
+  return task ? { ...task } : undefined;
+};
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const pageNum = Math.max(1, page);
+  const offset = (pageNum - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -48,7 +52,8 @@ const update = (id, fields) => {
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  const { id: _, createdAt: __, completedAt: ___, ...allowedFields } = fields;
+  const updated = { ...tasks[index], ...allowedFields };
   tasks[index] = updated;
   return updated;
 };

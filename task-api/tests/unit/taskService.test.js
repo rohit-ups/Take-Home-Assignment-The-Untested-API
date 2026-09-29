@@ -51,6 +51,15 @@ describe('taskService unit tests', () => {
       expect(tasks[0].title).toBe('Task 1');
       expect(tasks[1].title).toBe('Task 2');
     });
+
+    test('prevents store mutation via returned task object references (reference leak guard)', () => {
+      const created = taskService.create({ title: 'Original Task' });
+      const fetched = taskService.getAll()[0];
+      fetched.title = 'Mutated Externally';
+
+      const verifyStore = taskService.findById(created.id);
+      expect(verifyStore.title).toBe('Original Task');
+    });
   });
 
   describe('findById', () => {
@@ -68,7 +77,7 @@ describe('taskService unit tests', () => {
   });
 
   describe('getByStatus', () => {
-    test('filters tasks by status', () => {
+    test('filters tasks by exact status', () => {
       taskService.create({ title: 'Task 1', status: 'todo' });
       taskService.create({ title: 'Task 2', status: 'in_progress' });
       taskService.create({ title: 'Task 3', status: 'done' });
@@ -78,30 +87,29 @@ describe('taskService unit tests', () => {
       expect(todoTasks[0].title).toBe('Task 1');
     });
 
-    test('exposes BUG-01 substring matching issue when status is substring', () => {
+    test('returns empty array when searching by partial substring status (BUG-01 fixed)', () => {
       taskService.create({ title: 'Todo Task', status: 'todo' });
       taskService.create({ title: 'Done Task', status: 'done' });
 
-      // 'do' is a substring of both 'todo' and 'done'
       const matchedTasks = taskService.getByStatus('do');
-      // Demonstrates BUG-01: returns both 'todo' and 'done' due to String.includes()
-      expect(matchedTasks).toHaveLength(2);
+      expect(matchedTasks).toEqual([]);
     });
   });
 
   describe('getPaginated', () => {
-    test('exposes BUG-02 1-based pagination offset calculation', () => {
+    test('calculates 1-based page offset correctly (BUG-02 fixed)', () => {
       const t1 = taskService.create({ title: 'Task 1' });
       const t2 = taskService.create({ title: 'Task 2' });
+      const t3 = taskService.create({ title: 'Task 3' });
 
-      // Currently getPaginated(1, 10) calculates offset = 1 * 10 = 10
-      // Page 1 returns empty array when total tasks < 10!
-      const page1 = taskService.getPaginated(1, 10);
-      expect(page1).toEqual([]);
+      const page1 = taskService.getPaginated(1, 2);
+      expect(page1).toHaveLength(2);
+      expect(page1[0].title).toBe('Task 1');
+      expect(page1[1].title).toBe('Task 2');
 
-      // Demonstrates BUG-02: To get page 0 (offset 0), getPaginated(0, 10) must be called
-      const page0 = taskService.getPaginated(0, 10);
-      expect(page0).toHaveLength(2);
+      const page2 = taskService.getPaginated(2, 2);
+      expect(page2).toHaveLength(1);
+      expect(page2[0].title).toBe('Task 3');
     });
   });
 
@@ -133,6 +141,23 @@ describe('taskService unit tests', () => {
       expect(updated.title).toBe('Updated Title');
       expect(updated.priority).toBe('high');
       expect(taskService.findById(created.id).title).toBe('Updated Title');
+    });
+
+    test('prevents updating protected system metadata (id, createdAt, completedAt)', () => {
+      const created = taskService.create({ title: 'Protected Meta Task' });
+      const originalCreatedAt = created.createdAt;
+
+      const updated = taskService.update(created.id, {
+        id: 'hacked-id',
+        createdAt: '1999-01-01T00:00:00.000Z',
+        completedAt: '1999-01-01T00:00:00.000Z',
+        title: 'New Title',
+      });
+
+      expect(updated.id).toBe(created.id);
+      expect(updated.createdAt).toBe(originalCreatedAt);
+      expect(updated.completedAt).toBeNull();
+      expect(updated.title).toBe('New Title');
     });
 
     test('returns null when updating non-existent task', () => {
