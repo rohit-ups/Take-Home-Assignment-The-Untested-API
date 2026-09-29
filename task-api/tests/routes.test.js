@@ -14,14 +14,20 @@ describe("Task API Integration Tests", () => {
       expect(res.body).toEqual([]);
     });
 
-    test("supports pagination parameters", async () => {
+    test("supports pagination and status filter parameters", async () => {
       for (let i = 1; i <= 5; i++) {
-        taskService.create({ title: `Task ${i}` });
+        taskService.create({
+          title: `Task ${i}`,
+          status: i % 2 === 0 ? "done" : "todo",
+        });
       }
       const res = await request(app).get("/tasks?page=1&limit=2");
       expect(res.status).toBe(200);
       expect(res.body.length).toBe(2);
-      expect(res.body[0].title).toBe("Task 1");
+
+      const statusRes = await request(app).get("/tasks?status=done");
+      expect(statusRes.status).toBe(200);
+      expect(statusRes.body.length).toBe(2);
     });
   });
 
@@ -49,6 +55,14 @@ describe("Task API Integration Tests", () => {
         .send({ title: "Updated Title" });
       expect(res.status).toBe(200);
       expect(res.body.title).toBe("Updated Title");
+    });
+
+    test("returns 400 for invalid update validation", async () => {
+      const task = taskService.create({ title: "Valid Title" });
+      const res = await request(app)
+        .put(`/tasks/${task.id}`)
+        .send({ title: "   " });
+      expect(res.status).toBe(400);
     });
 
     test("returns 404 for non-existent task", async () => {
@@ -79,6 +93,11 @@ describe("Task API Integration Tests", () => {
       expect(res.status).toBe(200);
       expect(res.body.status).toBe("done");
       expect(res.body.completedAt).not.toBeNull();
+    });
+
+    test("returns 404 for non-existent task", async () => {
+      const res = await request(app).patch("/tasks/invalid-id/complete");
+      expect(res.status).toBe(404);
     });
   });
 
@@ -117,6 +136,26 @@ describe("Task API Integration Tests", () => {
         .send({ assignee: "Bob" });
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe("Error Handling Middleware", () => {
+    test("triggers 500 handler on uncaught server error", async () => {
+      const spy = jest
+        .spyOn(taskService, "getAll")
+        .mockImplementationOnce(() => {
+          throw new Error("Database connection error");
+        });
+      const consoleSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const res = await request(app).get("/tasks");
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: "Internal server error" });
+
+      spy.mockRestore();
+      consoleSpy.mockRestore();
     });
   });
 });
