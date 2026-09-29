@@ -1,15 +1,16 @@
 const { v4: uuidv4 } = require('uuid');
 
 let tasks = [];
+const VALID_STATUSES = ['todo', 'in_progress', 'done'];
 
 const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => VALID_STATUSES.includes(status) ? tasks.filter((t) => t.status === status) : null; //Fixed: Compare them directly before filtering
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const offset = (page - 1) * limit; //Fixed: Calculated offset by subtracting 1 from page first to match the expected data
   return tasks.slice(offset, offset + limit);
 };
 
@@ -66,7 +67,7 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
+    //Fixed: Removed priority field update 
     status: 'done',
     completedAt: new Date().toISOString(),
   };
@@ -80,6 +81,24 @@ const _reset = () => {
   tasks = [];
 };
 
+//-------------------
+
+const assignTask = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id); //Finds index of task that has the provided id
+  if (index === -1) return null; //else returns null which throws an error in route handler
+
+  if (tasks[index].status === 'done') return null; //Cannot assign task if it is already done
+
+  const updated = { // Creates new object with the assignee field
+    ...tasks[index],
+    assignee
+  }
+
+  tasks[index] = updated; //Adds the updated task back to the array of tasks
+  return updated //Returns the shallow copy to avoid direct mutation
+
+}
+
 module.exports = {
   getAll,
   findById,
@@ -91,4 +110,6 @@ module.exports = {
   remove,
   completeTask,
   _reset,
+
+  assignTask
 };

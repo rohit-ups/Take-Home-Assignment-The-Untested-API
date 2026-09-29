@@ -5,6 +5,11 @@ const validateCreateTask = (body) => {
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
     return 'title is required and must be a non-empty string';
   }
+
+  if(body.status === '' || body.priority === '' || body.dueDate === '') { //Fixed: Added validation for empty strings
+    return 'status, priority, and dueDate cannot be empty strings';
+  }
+
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return `status must be one of: ${VALID_STATUSES.join(', ')}`;
   }
@@ -21,6 +26,7 @@ const validateUpdateTask = (body) => {
   if (body.title !== undefined && (typeof body.title !== 'string' || body.title.trim() === '')) {
     return 'title must be a non-empty string';
   }
+
   if (body.status && !VALID_STATUSES.includes(body.status)) {
     return `status must be one of: ${VALID_STATUSES.join(', ')}`;
   }
@@ -32,5 +38,12 @@ const validateUpdateTask = (body) => {
   }
   return null;
 };
+//-------------------
+const validateAssignTask = (body) => {
+  if (!body.assignee || typeof body.assignee !== 'string' || body.assignee.trim() === '' || body.assignee.trim().length === 0) {
+    return 'assignee is required and must be a non-empty string';
+  }
+  return null;
+};
 
-module.exports = { validateCreateTask, validateUpdateTask };
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };

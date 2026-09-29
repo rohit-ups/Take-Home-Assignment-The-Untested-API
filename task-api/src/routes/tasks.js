@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const taskService = require('../services/taskService');
-const { validateCreateTask, validateUpdateTask } = require('../utils/validators');
+const { validateCreateTask, validateUpdateTask, validateAssignTask } = require('../utils/validators');
 
 router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
@@ -13,6 +13,9 @@ router.get('/', (req, res) => {
 
   if (status) {
     const tasks = taskService.getByStatus(status);
+    if (!tasks) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
     return res.json(tasks);
   }
 
@@ -67,6 +70,23 @@ router.patch('/:id/complete', (req, res) => {
   }
 
   res.json(task);
+});
+
+//-------------------
+router.patch('/:id/assign', (req, res) => {
+  const error = validateAssignTask(req.body); //Validates if the assignee field is present is a valid value
+  if (error) {
+    return res.status(400).json({ error }); //If it fails validation, throws an error with status code 400
+  }
+
+  const { assignee } = req.body; //Retrives assignee from the req body
+  
+  const task = taskService.assignTask(req.params.id, assignee); //Calls the service and passes the required fields
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found/Finished task can\'t be assigned to ' }); //If it returns null, throws an error with status 404 (There can be a better way to separate each error, however I combined them into one for simplicity's sake)
+  }
+
+  res.json(task); //returns the updated task object
 });
 
 module.exports = router;
