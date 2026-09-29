@@ -60,6 +60,34 @@ router.delete('/:id', (req, res) => {
   res.status(204).send();
 });
 
+
+router.patch('/:id/assign', (req, res) => {
+  const { assignee } = req.body;
+
+  if (
+    typeof assignee !== 'string' ||
+    assignee.trim() === ''
+  ) {
+    return res.status(400).json({
+      error: 'assignee must be a non-empty string',
+    });
+  }
+
+  const task = taskService.assignTask(
+    req.params.id,
+    assignee.trim()
+  );
+
+  if (!task) {
+    return res.status(404).json({
+      error: 'Task not found',
+    });
+  }
+
+  res.json(task);
+});
+
+
 router.patch('/:id/complete', (req, res) => {
   const task = taskService.completeTask(req.params.id);
   if (!task) {
