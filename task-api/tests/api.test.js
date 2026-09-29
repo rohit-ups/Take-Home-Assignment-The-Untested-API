@@ -260,6 +260,72 @@ describe('GET /tasks/stats', () => {
   });
 });
 
+// PATCH /tasks/:id/assign
+describe('PATCH /tasks/:id/assign', () => {
+  test('assigns a person to a task', async () => {
+    const created = await createTask();
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: 'Alice' });
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Alice');
+    expect(res.body.id).toBe(created.body.id);
+  });
+
+  test('returns 404 for non-existent task', async () => {
+    const res = await request(app)
+      .patch('/tasks/fake-id/assign')
+      .send({ assignee: 'Alice' });
+    expect(res.status).toBe(404);
+  });
+
+  test('returns 400 when assignee is missing', async () => {
+    const created = await createTask();
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/assignee/i);
+  });
+
+  test('returns 400 when assignee is empty string', async () => {
+    const created = await createTask();
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: '' });
+    expect(res.status).toBe(400);
+  });
+
+  test('returns 400 when assignee is whitespace only', async () => {
+    const created = await createTask();
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: '   ' });
+    expect(res.status).toBe(400);
+  });
+
+  test('reassigning overwrites the previous assignee', async () => {
+    const created = await createTask();
+    await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: 'Alice' });
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: 'Bob' });
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Bob');
+  });
+
+  test('trims whitespace from assignee', async () => {
+    const created = await createTask();
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: '  Alice  ' });
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBe('Alice');
+  });
+});
+
 // edge cases
 describe('Edge cases', () => {
   test('extra unknown fields get stored on the task', async () => {
@@ -284,3 +350,4 @@ describe('Edge cases', () => {
     expect(res.status).toBe(400);
   });
 });
+

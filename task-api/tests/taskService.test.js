@@ -165,10 +165,9 @@ describe('getPaginated', () => {
     }
   });
 
-  // bug: offset = page * limit instead of (page-1) * limit
-  test('page 1 skips first items (offset bug)', () => {
+  test('page 1 returns first items', () => {
     const page1 = taskService.getPaginated(1, 5);
-    expect(page1[0].title).toBe('Task 6'); // should be Task 1
+    expect(page1[0].title).toBe('Task 1');
     expect(page1).toHaveLength(5);
   });
 
@@ -210,6 +209,27 @@ describe('getStats', () => {
   test('future due date is not overdue', () => {
     createSampleTask({ status: 'todo', dueDate: '2099-12-31T00:00:00.000Z' });
     expect(taskService.getStats().overdue).toBe(0);
+  });
+});
+
+// assignTask
+describe('assignTask', () => {
+  test('assigns a person to a task', () => {
+    const task = createSampleTask();
+    const result = taskService.assignTask(task.id, 'Alice');
+    expect(result.assignee).toBe('Alice');
+    expect(result.id).toBe(task.id);
+  });
+
+  test('returns null for non-existent task', () => {
+    expect(taskService.assignTask('no-id', 'Bob')).toBeNull();
+  });
+
+  test('reassigning overwrites the previous assignee', () => {
+    const task = createSampleTask();
+    taskService.assignTask(task.id, 'Alice');
+    const result = taskService.assignTask(task.id, 'Bob');
+    expect(result.assignee).toBe('Bob');
   });
 });
 
