@@ -1,4 +1,4 @@
-const { validateCreateTask, validateUpdateTask } = require('../src/utils/validators');
+const { validateCreateTask, validateUpdateTask, validateAssignTask } = require('../src/utils/validators');
 
 const fullTask = {
   title: 'a real title',
@@ -89,5 +89,28 @@ describe('validateUpdateTask', () => {
 
   it('treats an empty status as if it was not sent', () => {
     expect(validateUpdateTask({ status: '' })).toBeNull();
+  });
+});
+
+describe('validateAssignTask', () => {
+  const message = 'assignee is required and must be a non-empty string';
+
+  it('accepts a non-empty name', () => {
+    expect(validateAssignTask({ assignee: 'Priya' })).toBeNull();
+    expect(validateAssignTask({ assignee: 'Priya Sharma' })).toBeNull();
+  });
+
+  it('rejects an assignee that is missing, empty, whitespace or not a string', () => {
+    expect(validateAssignTask({})).toBe(message);
+    expect(validateAssignTask({ assignee: '' })).toBe(message);
+    expect(validateAssignTask({ assignee: '   ' })).toBe(message);
+    expect(validateAssignTask({ assignee: 42 })).toBe(message);
+    expect(validateAssignTask({ assignee: null })).toBe(message);
+    expect(validateAssignTask({ assignee: ['Priya'] })).toBe(message);
+  });
+
+  it('rejects a request with no body at all', () => {
+    expect(validateAssignTask(undefined)).toBe(message);
+    expect(validateAssignTask(null)).toBe(message);
   });
 });

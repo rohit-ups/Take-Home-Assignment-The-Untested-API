@@ -312,6 +312,70 @@ describe('PATCH /tasks/:id/complete', () => {
   });
 });
 
+describe('PATCH /tasks/:id/assign', () => {
+  it('assigns the task, trims the name and keeps the other fields', async () => {
+    const created = await request(app).post('/tasks').send({ title: 'hand off' }).expect(201);
+
+    const res = await request(app)
+      .patch(`/tasks/${created.body.id}/assign`)
+      .send({ assignee: '  Priya  ' })
+      .expect(200);
+
+    expect(res.body.assignee).toBe('Priya');
+    expect(res.body.title).toBe('hand off');
+    expect(res.body.status).toBe('todo');
+    expect(res.body.id).toBe(created.body.id);
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const res = await request(app)
+      .patch('/tasks/does-not-exist/assign')
+      .send({ assignee: 'Priya' })
+      .expect(404);
+
+    expect(res.body).toEqual({ error: 'Task not found' });
+  });
+
+  it('returns 400 when the assignee is missing, empty, whitespace or not a string', async () => {
+    const created = await request(app).post('/tasks').send({ title: 'x' }).expect(201);
+    const id = created.body.id;
+
+    const missing = await request(app).patch(`/tasks/${id}/assign`).send({}).expect(400);
+
+    expect(missing.body).toEqual({
+      error: 'assignee is required and must be a non-empty string',
+    });
+
+    await request(app).patch(`/tasks/${id}/assign`).send({ assignee: '' }).expect(400);
+    await request(app).patch(`/tasks/${id}/assign`).send({ assignee: '   ' }).expect(400);
+    await request(app).patch(`/tasks/${id}/assign`).send({ assignee: 42 }).expect(400);
+  });
+
+  it('ignores other fields in the body and allows reassignment', async () => {
+    const created = await request(app)
+      .post('/tasks')
+      .send({ title: 'x', priority: 'high' })
+      .expect(201);
+    const id = created.body.id;
+
+    const first = await request(app)
+      .patch(`/tasks/${id}/assign`)
+      .send({ assignee: 'Priya', status: 'done', priority: 'low' })
+      .expect(200);
+
+    expect(first.body.assignee).toBe('Priya');
+    expect(first.body.status).toBe('todo');
+    expect(first.body.priority).toBe('high');
+
+    const second = await request(app)
+      .patch(`/tasks/${id}/assign`)
+      .send({ assignee: 'Sam' })
+      .expect(200);
+
+    expect(second.body.assignee).toBe('Sam');
+  });
+});
+
 describe('GET /tasks/stats', () => {
   it('returns zeros for an empty store', async () => {
     const res = await request(app).get('/tasks/stats').expect(200);

@@ -237,6 +237,45 @@ describe('update', () => {
   });
 });
 
+describe('assignTask', () => {
+  it('stores the assignee, persists it and allows reassignment', () => {
+    const task = taskService.create({ title: 'hand off', priority: 'high' });
+
+    const assigned = taskService.assignTask(task.id, 'Priya');
+
+    expect(assigned).toMatchObject({ id: task.id, title: 'hand off', priority: 'high', assignee: 'Priya' });
+    expect(taskService.findById(task.id).assignee).toBe('Priya');
+
+    const reassigned = taskService.assignTask(task.id, 'Sam');
+
+    expect(reassigned.assignee).toBe('Sam');
+    expect(taskService.findById(task.id).assignee).toBe('Sam');
+  });
+
+  it('leaves every other field of the task untouched', () => {
+    const task = taskService.create({
+      title: 'details',
+      description: 'keep me',
+      dueDate: '2030-01-01T00:00:00.000Z',
+    });
+
+    const assigned = taskService.assignTask(task.id, 'Priya');
+
+    expect(assigned).toMatchObject({
+      title: 'details',
+      description: 'keep me',
+      dueDate: '2030-01-01T00:00:00.000Z',
+      status: 'todo',
+      completedAt: null,
+      createdAt: task.createdAt,
+    });
+  });
+
+  it('returns null for an unknown id', () => {
+    expect(taskService.assignTask('missing', 'Priya')).toBeNull();
+  });
+});
+
 describe('remove', () => {
   it('removes the task and leaves the others in place', () => {
     const keep = taskService.create({ title: 'keep' });
