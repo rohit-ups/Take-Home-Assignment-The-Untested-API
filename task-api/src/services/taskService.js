@@ -6,11 +6,17 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
-const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+const getPaginated = (page, limit, status = null) => {
+  let source = tasks;
+  if (status) {
+    source = tasks.filter((t) => t.status === status);
+  }
+  const pageNum = Math.max(1, page);
+  const limitNum = Math.max(1, limit);
+  const offset = (pageNum - 1) * limitNum;
+  return source.slice(offset, offset + limitNum);
 };
 
 const getStats = () => {
@@ -66,7 +72,7 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
+    // priority: 'medium',  // to avoid auto setting high priority to medium
     status: 'done',
     completedAt: new Date().toISOString(),
   };

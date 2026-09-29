@@ -7,19 +7,19 @@ router.get('/stats', (req, res) => {
   const stats = taskService.getStats();
   res.json(stats);
 });
-
+ 
 router.get('/', (req, res) => {
   const { status, page, limit } = req.query;
 
-  if (status) {
-    const tasks = taskService.getByStatus(status);
+  if (page !== undefined || limit !== undefined) {
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 10;
+    const tasks = taskService.getPaginated(pageNum, limitNum, status);
     return res.json(tasks);
   }
 
-  if (page !== undefined || limit !== undefined) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-    const tasks = taskService.getPaginated(pageNum, limitNum);
+  if (status) {
+    const tasks = taskService.getByStatus(status);
     return res.json(tasks);
   }
 
