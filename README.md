@@ -6,6 +6,12 @@ Read **[ASSIGNMENT.md](./ASSIGNMENT.md)** for the full brief before you start.
 
 ---
 
+## Submission Deliverables
+- **Submission Notes & Questions:** [SUBMISSION.md](./SUBMISSION.md)
+- **Bug Report:** [BUG_REPORT.md](./BUG_REPORT.md)
+- **Unit & Integration Tests:** [`task-api/tests/`](./task-api/tests/)
+- **Test Coverage:** 97.4% statements across all files (`npm run coverage` inside `task-api`)
+
 ## A note on AI tools
 
 You're welcome to use AI tools. What we're evaluating is your ability to read and reason about unfamiliar code — so your submission should reflect your own understanding, not just generated output.
@@ -74,9 +80,10 @@ ASSIGNMENT.md               # Full brief — read this first
   "id": "uuid",
   "title": "string",
   "description": "string",
-  "status": "pending | in-progress | completed",
+  "status": "todo | in_progress | done",
   "priority": "low | medium | high",
   "dueDate": "ISO 8601 or null",
+  "assignee": "string or null",
   "completedAt": "ISO 8601 or null",
   "createdAt": "ISO 8601"
 }
@@ -93,7 +100,14 @@ curl -X POST http://localhost:3000/tasks \
 
 **List tasks with filter**
 ```bash
-curl "http://localhost:3000/tasks?status=pending&page=1&limit=10"
+curl "http://localhost:3000/tasks?status=todo&page=1&limit=10"
+```
+
+**Assign task**
+```bash
+curl -X PATCH http://localhost:3000/tasks/<id>/assign \
+  -H "Content-Type: application/json" \
+  -d '{"assignee": "Alice"}'
 ```
 
 **Mark complete**
