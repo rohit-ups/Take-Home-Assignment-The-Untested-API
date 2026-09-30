@@ -33,4 +33,21 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+const validateAssignTask = (body) => {
+  if (!body || body.assignee === undefined || body.assignee === null) {
+    return 'assignee is required and must be a non-empty string';
+  }
+  if (typeof body.assignee !== 'string') {
+    return 'assignee must be a string';
+  }
+  const trimmed = body.assignee.trim();
+  if (trimmed === '') {
+    return 'assignee cannot be empty or whitespace-only';
+  }
+  if (trimmed.length > 100) {
+    return 'assignee must not exceed 100 characters';
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };
