@@ -111,3 +111,30 @@ See [ASSIGNMENT.md](./ASSIGNMENT.md) for full submission requirements. At minimu
 - **Bug report** — what you found, where in the code, and why it's a bug (not just symptoms)
 - **At least one fix** — with a note on your approach
 - **`PATCH /tasks/:id/assign` implementation** — plus a short explanation of any design decisions (validation, edge cases, etc.)
+
+---
+
+## Submission Notes
+
+### Test Coverage
+![Test Coverage Summary](./test_coverage.png)
+
+### What I'd test next if I had more time
+- Performance testing/load testing, especially around the pagination logic if the array size grows.
+- Test coverage for invalid UUID formats on the `/:id` paths to ensure the API handles them gracefully.
+- Adding tests for cross-site scripting (XSS) and injection prevention on text fields like `title`, `description`, and `assignee`.
+
+### Anything that surprised me in the codebase
+- It was surprising to see the original `update` function use simple object spread syntax `...fields` over the task. This essentially allowed anyone to overwrite critical backend fields like `id` or `createdAt` simply by sending them in a `PUT` request payload.
+- It was interesting and helpful that the bugs were already highlighted with `BUG:` prefixes in the test descriptions, acting as great test-driven documentation.
+
+### Questions I'd ask before shipping this to production
+1. **Database Strategy:** The in-memory array will eventually consume all memory and will lose data on restarts. What is the plan for migrating to a persistent database (PostgreSQL, MongoDB, etc.)?
+2. **Authentication/Authorization:** Is this API meant to be public? Currently, anyone can delete, reassign, or update any task. Should we implement an authentication middleware (e.g., JWT)?
+3. **Pagination Scalability:** Array `slice` pagination works for small arrays, but fetching all tasks to slice them will crash the app at scale. How big do we expect the dataset to grow?
+4. **Rate Limiting & Logging:** Should we add rate-limiting for DDOS protection and a robust logging mechanism (e.g., Winston, Morgan) to monitor API usage and errors in production?
+
+### Design Decisions for `PATCH /tasks/:id/assign`
+- **Validation**: Added a strict check inside `validators.js` that `assignee` must be a defined, non-empty string. If it's empty or just whitespace, it returns a `400 Bad Request`.
+- **Modularity**: I maintained the existing codebase pattern by placing validation logic in `utils/validators.js` (`validateAssignTask`) and the data manipulation logic in `services/taskService.js` (`assignTask`).
+- **Idempotency**: It is safe to call the endpoint multiple times with the same assignee.
