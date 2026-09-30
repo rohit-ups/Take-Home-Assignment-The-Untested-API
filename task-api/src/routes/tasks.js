@@ -17,11 +17,15 @@ router.get('/', (req, res) => {
   }
 
   if (page !== undefined || limit !== undefined) {
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-    const tasks = taskService.getPaginated(pageNum, limitNum);
-    return res.json(tasks);
-  }
+  const parsedPage = parseInt(page);
+  const parsedLimit = parseInt(limit);
+
+  const pageNum = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const limitNum = Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
+
+  const tasks = taskService.getPaginated(pageNum, limitNum);
+  return res.json(tasks);
+}
 
   const tasks = taskService.getAll();
   res.json(tasks);
@@ -64,6 +68,29 @@ router.patch('/:id/complete', (req, res) => {
   const task = taskService.completeTask(req.params.id);
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(task);
+});
+
+router.patch("/:id/assign", (req, res) => {
+  const { assignee } = req.body;
+
+  if (
+    typeof assignee !== "string" ||
+    assignee.trim() === "" ||
+    assignee.length > 100
+  ) {
+    return res.status(400).json({ error: "Invalid assignee" });
+  }
+
+  const task = taskService.assignTask(
+    req.params.id,
+    assignee.trim()
+  );
+
+  if (!task) {
+    return res.status(404).json({ error: "Task not found" });
   }
 
   res.json(task);
