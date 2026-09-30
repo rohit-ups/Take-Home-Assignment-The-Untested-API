@@ -1,3 +1,11 @@
+## Live Deployment
+
+- **Base URL:** `https://api-submission.onrender.com`
+- **List Tasks:** [`https://api-submission.onrender.com/tasks`](https://api-submission.onrender.com/tasks)
+- **API Stats:** [`https://api-submission.onrender.com/tasks/stats`](https://api-submission.onrender.com/tasks/stats)
+
+> *Note:* The API root (`/`) returns `Cannot GET /` by design because all resource endpoints are mounted under `/tasks`.
+
 # Take-Home Assignment — The Untested API
 
 A 2-day take-home assignment. You'll read unfamiliar code, write tests, track down bugs, and ship a small feature.
@@ -111,3 +119,13 @@ See [ASSIGNMENT.md](./ASSIGNMENT.md) for full submission requirements. At minimu
 - **Bug report** — what you found, where in the code, and why it's a bug (not just symptoms)
 - **At least one fix** — with a note on your approach
 - **`PATCH /tasks/:id/assign` implementation** — plus a short explanation of any design decisions (validation, edge cases, etc.)
+
+---
+
+## Submission Deliverables
+
+- **Live API URL:** `https://api-submission.onrender.com`
+- **Test Coverage:** 94.87% statements across all files (see [COVERAGE.md](./COVERAGE.md))
+- **Bug Report:** Identified issues, causes, and fixes detailed in [BUGS.md](./BUGS.md)
+- **Feature Design Notes:** Design choices for `PATCH /tasks/:id/assign` detailed in [DESIGN_NOTES.md](./DESIGN_NOTES.md)
+- **Submission Reflection:** Answers to final evaluation questions in [SUBMISSION.md](./SUBMISSION.md)
