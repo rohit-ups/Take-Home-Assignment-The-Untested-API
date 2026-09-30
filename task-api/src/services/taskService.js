@@ -6,11 +6,19 @@ const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+// FIX #2: Status filtering must use exact matching.
+// The original code used status.includes(...), which matched partial values
+// (e.g. ?status=do would match "todo"). Now we use strict equality.
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
+// FIX #1: Page numbers are 1-based, so offset = (page - 1) * limit.
+// The original used page * limit, which skipped the first page's items.
+// Invalid page/limit values are clamped to safe defaults.
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const safePage = Math.max(1, parseInt(page, 10) || 1);
+  const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
+  const offset = (safePage - 1) * safeLimit;
+  return tasks.slice(offset, offset + safeLimit);
 };
 
 const getStats = () => {
@@ -28,7 +36,8 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+// FEATURE: tasks now carry an optional `assignee` (defaults to null).
+const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null, assignee = null }) => {
   const task = {
     id: uuidv4(),
     title,
@@ -36,6 +45,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -60,16 +70,32 @@ const remove = (id) => {
   return true;
 };
 
+// FIX #3: Completing a task must NOT change its priority.
+// The original code forced priority: 'medium', so a "high" task silently
+// lost its priority when completed. The line was removed.
 const completeTask = (id) => {
   const task = findById(id);
   if (!task) return null;
 
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
   };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
+// FEATURE: assign a task to a person.
+// Design decision: if the task is already assigned, the assignee is
+// overwritten (reassignment is allowed) and the updated task is returned.
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = { ...task, assignee };
 
   const index = tasks.findIndex((t) => t.id === id);
   tasks[index] = updated;
@@ -90,5 +116,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
