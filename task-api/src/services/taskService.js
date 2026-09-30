@@ -8,8 +8,10 @@ const findById = (id) => tasks.find((t) => t.id === id);
 
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
+// Pages are 1-indexed (the route defaults `page` to 1), so page 1 must start at
+// offset 0. The original `page * limit` skipped the whole first page.
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
 
@@ -37,6 +39,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     priority,
     dueDate,
     completedAt: null,
+    assignee: null, // set via PATCH /tasks/:id/assign
     createdAt: new Date().toISOString(),
   };
   tasks.push(task);
@@ -76,6 +79,17 @@ const completeTask = (id) => {
   return updated;
 };
 
+// Stores the (already validated + trimmed) assignee on the task.
+// Returns null if the task doesn't exist so the route can answer 404.
+const assign = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const updated = { ...tasks[index], assignee };
+  tasks[index] = updated;
+  return updated;
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +104,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assign,
   _reset,
 };
