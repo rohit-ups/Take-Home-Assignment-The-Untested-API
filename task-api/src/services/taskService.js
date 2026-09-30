@@ -8,11 +8,13 @@ const findById = (id) => tasks.find((t) => t.id === id);
 
 const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
 
-const getPaginated = (page, limit) => {
-  const offset = page * limit;
+// Part B: Bug Fix - Corrected pagination offset
+// The original code used (page * limit) which skipped the first page. 
+// Updated to ((page - 1) * limit) for proper 1-indexed pagination.
+const getPaginated = (page = 1, limit = 10) => {
+  const offset = (page - 1) * limit;
   return tasks.slice(offset, offset + limit);
 };
-
 const getStats = () => {
   const now = new Date();
   const counts = { todo: 0, in_progress: 0, done: 0 };
@@ -76,6 +78,20 @@ const completeTask = (id) => {
   return updated;
 };
 
+// Part C: New Feature - Assign Task logic
+// Uses object spread to safely update only the assignee field 
+// while protecting immutable system fields like id and createdAt.
+const assignTask = (id, assignee) => {
+  const index = tasks.findIndex(t => t.id === id);
+  if (index === -1) return null;
+
+  tasks[index] = {
+    ...tasks[index],
+    assignee
+  };
+  return tasks[index];
+};
+
 const _reset = () => {
   tasks = [];
 };
@@ -90,5 +106,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask, //exported assignTask
   _reset,
 };

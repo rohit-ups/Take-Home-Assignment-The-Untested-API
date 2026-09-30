@@ -69,4 +69,23 @@ router.patch('/:id/complete', (req, res) => {
   res.json(task);
 });
 
+// Part C: New Feature - Assign a task to a user
+// Validates that the assignee is provided and is a valid, non-empty string 
+// before passing the data to the service layer.
+router.patch('/:id/assign', (req, res) => {
+  const { id } = req.params;
+  const { assignee } = req.body;
+
+  if (!assignee || typeof assignee !== 'string' || assignee.trim() === '') {
+    return res.status(400).json({ error: 'Valid assignee name is required' });
+  }
+
+  const updatedTask = taskService.assignTask(id, assignee);
+  if (!updatedTask) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json(updatedTask);
+});
+
 module.exports = router;
