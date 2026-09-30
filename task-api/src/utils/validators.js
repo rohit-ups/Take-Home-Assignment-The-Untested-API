@@ -11,6 +11,9 @@ const validateCreateTask = (body) => {
   if (body.priority && !VALID_PRIORITIES.includes(body.priority)) {
     return `priority must be one of: ${VALID_PRIORITIES.join(', ')}`;
   }
+  if (body.assignee !== undefined && (typeof body.assignee !== 'string' || body.assignee.trim() === '')) {
+    return 'assignee must be a non-empty string';
+  }
   if (body.dueDate && isNaN(Date.parse(body.dueDate))) {
     return 'dueDate must be a valid ISO date string';
   }
@@ -27,10 +30,21 @@ const validateUpdateTask = (body) => {
   if (body.priority && !VALID_PRIORITIES.includes(body.priority)) {
     return `priority must be one of: ${VALID_PRIORITIES.join(', ')}`;
   }
+  if (body.assignee !== undefined && (typeof body.assignee !== 'string' || body.assignee.trim() === '')) {
+    return 'assignee must be a non-empty string';
+  }
   if (body.dueDate && isNaN(Date.parse(body.dueDate))) {
     return 'dueDate must be a valid ISO date string';
   }
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+// Assignment validation keeps the endpoint safe: reject empty, missing, or non-string values.
+const validateAssignTask = (body) => {
+  if (!body || typeof body.assignee !== 'string' || body.assignee.trim() === '') {
+    return 'assignee must be a non-empty string';
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };
