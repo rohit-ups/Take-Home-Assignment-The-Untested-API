@@ -61,11 +61,11 @@ ASSIGNMENT.md               # Full brief — read this first
 |----------|---------------------------|------------------------------------------|
 | `GET`    | `/tasks`                  | List all tasks. Supports `?status=`, `?page=`, `?limit=` |
 | `POST`   | `/tasks`                  | Create a new task                        |
-| `PUT`    | `/tasks/:id`              | Full update of a task                    |
+| `PUT`    | `/tasks/:id`              | Update supplied editable fields          |
 | `DELETE` | `/tasks/:id`              | Delete a task (returns 204)              |
 | `PATCH`  | `/tasks/:id/complete`     | Mark a task as complete                  |
 | `GET`    | `/tasks/stats`            | Counts by status + overdue count         |
-| `PATCH`  | `/tasks/:id/assign`       | **Assign a task to a user** _(to implement)_ |
+| `PATCH`  | `/tasks/:id/assign`       | Assign or reassign a task to a name       |
 
 ### Task shape
 
@@ -74,7 +74,7 @@ ASSIGNMENT.md               # Full brief — read this first
   "id": "uuid",
   "title": "string",
   "description": "string",
-  "status": "pending | in-progress | completed",
+  "status": "todo | in_progress | done",
   "priority": "low | medium | high",
   "dueDate": "ISO 8601 or null",
   "completedAt": "ISO 8601 or null",
@@ -93,13 +93,51 @@ curl -X POST http://localhost:3000/tasks \
 
 **List tasks with filter**
 ```bash
-curl "http://localhost:3000/tasks?status=pending&page=1&limit=10"
+curl "http://localhost:3000/tasks?status=todo&page=1&limit=10"
 ```
 
 **Mark complete**
 ```bash
 curl -X PATCH http://localhost:3000/tasks/<id>/complete
 ```
+
+**Assign or reassign**
+```bash
+curl -X PATCH http://localhost:3000/tasks/<id>/assign \
+  -H "Content-Type: application/json" \
+  -d '{"assignee": "Alex"}'
+```
+
+### Behavior and design decisions
+
+- Status names follow ASSIGNMENT.md: `todo`, `in_progress`, `done`.
+- Filtering is exact and happens before pagination. Pages start at 1; omitted
+  page/limit values default to 1/10 when pagination is requested. Unsupported
+  statuses and invalid positive-integer pagination values return 400.
+- PUT keeps the existing merge behavior: omitted fields remain unchanged, and
+  an empty object is a no-op. Editable fields are title, description, status,
+  priority, and dueDate. Unknown fields and server-managed fields are rejected.
+- Dates accept `null`, `YYYY-MM-DD`, or timestamps with seconds, an optional
+  1–3 digit fractional second, and `Z` or a `±HH:MM` timezone. Invalid calendar
+  dates and informal/local-time date strings are rejected. Date-only values
+  represent midnight UTC when computing overdue tasks.
+- Entering `done` sets completedAt; reopening clears it. Repeated completion
+  preserves the first timestamp and does not change priority.
+- Assignment accepts a nonblank string and trims surrounding whitespace.
+  Reassignment replaces the old name. Successful requests return 200 with the
+  task; valid requests for missing tasks return 404. Invalid bodies return 400
+  before task lookup. The assignee field appears after assignment; no user
+  database or authentication is introduced.
+- Malformed JSON returns 400; JSON above the existing Express body limit
+  returns 413. Unexpected errors return a generic 500 response.
+
+### Implementation results
+
+The implementation includes service unit tests, validator tests, and Supertest
+integration tests for every endpoint and its edge cases. See
+[BUG_REPORT.md](./BUG_REPORT.md) for reproductions, causes, fixes, coverage output,
+and submission notes. Run `npm run coverage -- --runInBand` to reproduce the
+recorded results. No additional dependencies were added.
 
 ---
 
