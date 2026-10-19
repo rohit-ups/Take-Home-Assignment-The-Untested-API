@@ -61,11 +61,11 @@ ASSIGNMENT.md               # Full brief — read this first
 |----------|---------------------------|------------------------------------------|
 | `GET`    | `/tasks`                  | List all tasks. Supports `?status=`, `?page=`, `?limit=` |
 | `POST`   | `/tasks`                  | Create a new task                        |
-| `PUT`    | `/tasks/:id`              | Full update of a task                    |
+| `PUT`    | `/tasks/:id`              | Update supplied editable fields          |
 | `DELETE` | `/tasks/:id`              | Delete a task (returns 204)              |
 | `PATCH`  | `/tasks/:id/complete`     | Mark a task as complete                  |
 | `GET`    | `/tasks/stats`            | Counts by status + overdue count         |
-| `PATCH`  | `/tasks/:id/assign`       | **Assign a task to a user** _(to implement)_ |
+| `PATCH`  | `/tasks/:id/assign`       | Assign or reassign a task by name         |
 
 ### Task shape
 
@@ -74,11 +74,12 @@ ASSIGNMENT.md               # Full brief — read this first
   "id": "uuid",
   "title": "string",
   "description": "string",
-  "status": "pending | in-progress | completed",
+  "status": "todo | in_progress | done",
   "priority": "low | medium | high",
   "dueDate": "ISO 8601 or null",
   "completedAt": "ISO 8601 or null",
-  "createdAt": "ISO 8601"
+  "createdAt": "ISO 8601",
+  "assignee": "string (present after assignment)"
 }
 ```
 
@@ -93,7 +94,7 @@ curl -X POST http://localhost:3000/tasks \
 
 **List tasks with filter**
 ```bash
-curl "http://localhost:3000/tasks?status=pending&page=1&limit=10"
+curl "http://localhost:3000/tasks?status=todo&page=1&limit=10"
 ```
 
 **Mark complete**
@@ -111,3 +112,26 @@ See [ASSIGNMENT.md](./ASSIGNMENT.md) for full submission requirements. At minimu
 - **Bug report** — what you found, where in the code, and why it's a bug (not just symptoms)
 - **At least one fix** — with a note on your approach
 - **`PATCH /tasks/:id/assign` implementation** — plus a short explanation of any design decisions (validation, edge cases, etc.)
+
+## Request behavior
+
+- Status is `todo`, `in_progress`, or `done`. Priority is `low`, `medium`, or `high`.
+- POST requires a non-blank title. PUT keeps omitted fields unchanged; an empty object is a no-op. Editable fields are `title`, `description`, `status`, `priority`, and `dueDate`. Unknown fields and server-owned metadata are rejected with 400.
+- Description must be a string. Title whitespace is preserved, but whitespace-only titles are rejected.
+- `dueDate` accepts null or `YYYY-MM-DDTHH:mm:ss[.SSS]Z` / a timestamp with a `±HH:mm` offset. Fractional seconds may contain 1–3 digits. Date-only strings, missing timezones, and impossible calendar dates are rejected. Null clears a deadline.
+- Filtering uses exact status values. Unknown statuses return 400. Filtering happens before pagination.
+- Pagination starts at page 1. Omitted page/limit default to 1/10 when pagination is requested. Supplied values must be positive decimal integers within JavaScript's safe range; leading zeros and unsafe computed offsets are rejected. Pages beyond the result return `[]`.
+- Entering `done` records `completedAt`; repeated completion preserves it. Reopening clears it. Completion preserves priority and assignment.
+- Assignment accepts only `{ "assignee": "name" }`, trims the name, and rejects missing, non-string, or blank names with 400. Reassignment and assignment of completed tasks are allowed. Valid input for a missing task returns 404. Invalid input is checked before task existence, consistently with PUT.
+- Assignment changes use the dedicated PATCH endpoint. PUT cannot overwrite `assignee`.
+- Malformed JSON returns 400; bodies above Express's default 100 KB limit return 413. Unexpected internal errors return a generic 500.
+
+Assign a task:
+
+```bash
+curl -X PATCH http://localhost:3000/tasks/<id>/assign \
+  -H 'Content-Type: application/json' \
+  -d '{"assignee":"Vaibhav"}'
+```
+
+For reproduced bugs, causes, fixes, and test evidence, see [BUG_REPORT.md](./BUG_REPORT.md). Run `npm run coverage` inside `task-api`; Jest enforces at least 80% coverage in every global metric.
